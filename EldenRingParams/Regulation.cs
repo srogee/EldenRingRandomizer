@@ -50,8 +50,8 @@ namespace EldenRingParams
         {
             if (Data == null)
             {
-                Console.WriteLine($"Decrypting {ModContext.RegulationPath}...");
-                Data = SFUtil.DecryptERRegulation(ModContext.RegulationPath);
+                Console.WriteLine($"Decrypting {ModContext.RegulationInPath}...");
+                Data = SFUtil.DecryptERRegulation(ModContext.RegulationInPath);
             }
         }
 
@@ -68,8 +68,8 @@ namespace EldenRingParams
                 }
             }
 
-            Console.WriteLine($"Encrypting {ModContext.RegulationPath}...");
-            SFUtil.EncryptERRegulation(ModContext.RegulationPath, Data);
+            Console.WriteLine($"Encrypting {ModContext.RegulationOutPath}...");
+            SFUtil.EncryptERRegulation(ModContext.RegulationOutPath, Data);
         }
 
         public PARAM.Row GetRowById(string paramName, int id)

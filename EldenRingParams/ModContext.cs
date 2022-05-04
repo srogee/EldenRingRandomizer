@@ -17,7 +17,7 @@ namespace EldenRingParams
 
         public ModContext(string gameDirectory, string paramDexDirectory)
         {
-            RegulationInPath = Path.Combine(gameDirectory, "regulation_vanilla.bin"); // Uses backup file as base so we start from scratch every time
+            RegulationInPath = Path.Combine(gameDirectory, "regulation.bin.bak"); // Uses backup file as base so we start from scratch every time
             RegulationOutPath = Path.Combine(gameDirectory, "regulation.bin");
             ParamDefsDirectory = Path.Combine(paramDexDirectory, "Defs");
             ParamNamesDirectory = Path.Combine(paramDexDirectory, "Names");

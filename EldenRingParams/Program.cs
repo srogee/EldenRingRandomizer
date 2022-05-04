@@ -16,11 +16,9 @@ namespace EldenRingParams
             string paramDefsDirectory = "C:\\Users\\rid3r\\Downloads\\Yapped-Rune-Bear-2_1_0\\Paramdex\\ER";
 
             var modContext = new ModContext(gameDirectory, paramDefsDirectory);
+            var regulation = new Regulation(modContext);
 
-            var mod = new AdjustStatRequirementsAndScalingMod(modContext);
-            mod.Run();
-
-            modContext.Save();
+            regulation.Save();
         }
     }
 }
