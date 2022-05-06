@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net46</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StronglyTypedParams\StronglyTypedParams.csproj" />
+  </ItemGroup>
+
+  <!-- Add this as a new ItemGroup, replacing paths and names appropriately -->
+
+</Project>
