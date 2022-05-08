@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "EldenRingItemRandomizer": {
+      "commandName": "Project",
+      "nativeDebugging": false
+    }
+  }
+}
