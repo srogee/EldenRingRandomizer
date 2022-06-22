@@ -50,7 +50,7 @@ namespace EldenRingItemRandomizer
 
         private ItemTypeAndWeight[] ChurchWeights = new ItemTypeAndWeight[]
         {
-            new ItemTypeAndWeight(ItemType.Weapon, 1.0f),
+            new ItemTypeAndWeight(ItemType.Weapon, 2f),
             new ItemTypeAndWeight(ItemType.SpiritAsh, 1.0f),
             new ItemTypeAndWeight(ItemType.AshOfWar, 1.0f),
             new ItemTypeAndWeight(ItemType.Runes, 0.5f, true),
@@ -66,7 +66,7 @@ namespace EldenRingItemRandomizer
 
         private ItemTypeAndWeight[] MinorBossWeights = new ItemTypeAndWeight[]
         {
-            new ItemTypeAndWeight(ItemType.Weapon, 1.0f),
+            new ItemTypeAndWeight(ItemType.Weapon, 2f),
             new ItemTypeAndWeight(ItemType.SpiritAsh, 1.0f),
             new ItemTypeAndWeight(ItemType.AshOfWar, 1.0f),
             new ItemTypeAndWeight(ItemType.Talisman, 1.0f),
@@ -75,14 +75,14 @@ namespace EldenRingItemRandomizer
 
         private ItemTypeAndWeight[] CarriageWeights = new ItemTypeAndWeight[]
         {
-            new ItemTypeAndWeight(ItemType.Weapon, 1.0f),
+            new ItemTypeAndWeight(ItemType.Weapon, 2f),
             new ItemTypeAndWeight(ItemType.SpiritAsh, 1.0f),
             new ItemTypeAndWeight(ItemType.Runes, 0.5f, true),
         };
 
         private ItemTypeAndWeight[] MajorBossWeights = new ItemTypeAndWeight[]
         {
-            new ItemTypeAndWeight(ItemType.Weapon, 1.0f),
+            new ItemTypeAndWeight(ItemType.Weapon, 2f),
             new ItemTypeAndWeight(ItemType.SpiritAsh, 1.0f),
             new ItemTypeAndWeight(ItemType.Runes, 0.5f, true),
         };
@@ -96,18 +96,19 @@ namespace EldenRingItemRandomizer
 
         private ItemTypeAndWeight[] MapPlinthWeights = new ItemTypeAndWeight[]
         {
-            new ItemTypeAndWeight(ItemType.Weapon, 1.0f),
+            new ItemTypeAndWeight(ItemType.Weapon, 2f),
             new ItemTypeAndWeight(ItemType.Runes, 0.5f, true),
         };
 
         private ItemTypeAndWeight[] ShopWeights = new ItemTypeAndWeight[]
         {
-            new ItemTypeAndWeight(ItemType.Sorcery, 2.0f),
-            new ItemTypeAndWeight(ItemType.Incantation, 2.0f),
+            new ItemTypeAndWeight(ItemType.Weapon, 0.5f),
+            new ItemTypeAndWeight(ItemType.Sorcery, 1.0f),
+            new ItemTypeAndWeight(ItemType.Incantation, 1.0f),
             new ItemTypeAndWeight(ItemType.Talisman, 1.0f),
             new ItemTypeAndWeight(ItemType.PhysickTear, 1.0f),
             new ItemTypeAndWeight(ItemType.AshOfWar, 1.0f),
-            new ItemTypeAndWeight(ItemType.SpiritAsh, 0.5f),
+            new ItemTypeAndWeight(ItemType.SpiritAsh, 1.0f),
         };
 
         public void Run()
