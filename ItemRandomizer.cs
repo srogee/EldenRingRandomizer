@@ -111,6 +111,13 @@ namespace EldenRingItemRandomizer
             new ItemTypeAndWeight(ItemType.SpiritAsh, 1.0f),
         };
 
+        private ItemTypeAndWeight[] AllWeights = new ItemTypeAndWeight[]
+        {
+            new ItemTypeAndWeight(ItemType.Weapon, 1.0f),
+            new ItemTypeAndWeight(ItemType.AshOfWar, 0.25f),
+            new ItemTypeAndWeight(ItemType.Runes, 0.25f),
+        };
+
         public void Run()
         {
             ChosenItems = new Dictionary<ItemType, HashSet<int>>();
@@ -155,20 +162,26 @@ namespace EldenRingItemRandomizer
                     // Flasks
                     continue;
                 }
-                ProcessItemLot(itemLot);
+                
+                var preserveItem = ProcessItemLot(itemLot);
+                if (!preserveItem)
+                {
+                    RandomizeOneItemLot(itemLot, AllWeights, GoodWeaponTypes, true);
+                }
             }
 
             // Add back in good items
-            RandomizeItemGroups(GameData.TeardropScarabs, ScarabWeights, GoodWeaponTypes);
-            RandomizeItemGroups(GameData.MajorBosses, MajorBossWeights, GoodWeaponTypes);
-            RandomizeItemGroups(GameData.MinorBosses, MinorBossWeights, GoodWeaponTypes);
-            RandomizeItemGroups(GameData.Churches, ChurchWeights, GoodWeaponTypes);
-            RandomizeItemGroups(GameData.Carriages, CarriageWeights, GoodWeaponTypes);
-            RandomizeItemGroups(GameData.MapPlinths, MapPlinthWeights, GoodWeaponTypes);
-            RandomizeItemGroups(GameData.GoldenTrees, GoldenTreeWeights, GoodWeaponTypes);
-            AddNiceStartingItems();
+            //RandomizeItemGroups(GameData.TeardropScarabs, ScarabWeights, GoodWeaponTypes);
+            //RandomizeItemGroups(GameData.MajorBosses, MajorBossWeights, GoodWeaponTypes);
+            //RandomizeItemGroups(GameData.MinorBosses, MinorBossWeights, GoodWeaponTypes);
+            //RandomizeItemGroups(GameData.Churches, ChurchWeights, GoodWeaponTypes);
+            //RandomizeItemGroups(GameData.Carriages, CarriageWeights, GoodWeaponTypes);
+            //RandomizeItemGroups(GameData.MapPlinths, MapPlinthWeights, GoodWeaponTypes);
+            //RandomizeItemGroups(GameData.GoldenTrees, GoldenTreeWeights, GoodWeaponTypes);
+            //AddNiceStartingItems();
             GivePlayerMaxFlasks();
 
+            ChosenItems.Clear(); // allow duplicates between world and shop.
             Console.WriteLine($"Modifying shop inventories...");
             var shuffledShopLineup = RegulationParams.ShopLineupParam.ToArray();
             Shuffle(shuffledShopLineup);
@@ -209,7 +222,7 @@ namespace EldenRingItemRandomizer
             row.ItemCategory1 = ItemlotItemcategory.Accessory;
         }
 
-        private void RandomizeItemGroups(IEnumerable<ItemLotGroup> groups, ItemTypeAndWeight[] weights, WepType[] wepTypes)
+        private void RandomizeItemGroups(IEnumerable<ItemLotGroup> groups, ItemTypeAndWeight[] weights, WepType[] wepTypes, bool withReplacement = false)
         {
             var shuffledGroups = groups.ToArray();
             Shuffle(shuffledGroups);
@@ -219,18 +232,23 @@ namespace EldenRingItemRandomizer
                 foreach (var itemLotId in group.ItemLotIds)
                 {
                     var itemLot = RegulationParams.ItemLotParam_map[itemLotId];
-                    var item = GetRandomItemWeighted(weights, wepTypes, false);
-                    if (item != null)
-                    {
-                        itemLot.ItemID1 = item.Id;
-                        itemLot.ItemCategory1 = item.Category;
-                        itemLot.ItemChance1 = 1000;
-                        itemLot.ItemAmount1 = 1;
-                    }
-
-                    Console.WriteLine($"{itemLot.RowName}\n\tReplaced with {GetFriendlyItemName(item)}");
+                    RandomizeOneItemLot(itemLot, weights, wepTypes, withReplacement);
                 }
             }
+        }
+
+        private void RandomizeOneItemLot(ItemLotParam itemLot, ItemTypeAndWeight[] weights, WepType[] wepTypes, bool withReplacement = false)
+        {
+            var item = GetRandomItemWeighted(weights, wepTypes, withReplacement);
+            if (item != null)
+            {
+                itemLot.ItemID1 = item.Id;
+                itemLot.ItemCategory1 = item.Category;
+                itemLot.ItemChance1 = 1000;
+                itemLot.ItemAmount1 = 1;
+            }
+
+            Console.WriteLine($"{itemLot.RowName}\n\tReplaced with {GetFriendlyItemName(item)}");
         }
 
         private string GetFriendlyItemName(ItemDescription desc)
@@ -792,8 +810,9 @@ namespace EldenRingItemRandomizer
         }
 
         // Set all weapons in the item lot to be their max upgraded equivalents
-        void ProcessItemLot(ItemLotParam itemLot)
+        bool ProcessItemLot(ItemLotParam itemLot)
         {
+            bool preserve = false;
             for (int i = 1; i <= 8; i++)
             {
                 var itemIdCell = itemLot[$"ItemID{i}"];
@@ -807,6 +826,7 @@ namespace EldenRingItemRandomizer
                 // Key item, unique item, or serpent-hunter
                 if ((category == ItemlotItemcategory.Good && IsKeyItemOrUniqueItem(itemId)) || (category == ItemlotItemcategory.Weapon && itemId == 17030000))
                 {
+                    preserve = true;
                     continue;
                 }
 
@@ -814,17 +834,9 @@ namespace EldenRingItemRandomizer
                 itemChanceCell.Value = 0;
                 amountCell.Value = 0;
                 categoryCell.Value = ItemlotItemcategory.None;
-
-                //var itemCell = itemLot[$"ItemID{i}"];
-                //if (itemCell != null)
-                //{
-                //    var id = (int)itemCell.Value;
-                //    if (ReverseWeaponIndex.TryGetValue(id, out EquipParamWeapon weapon))
-                //    {
-                //        itemCell.Value = WeaponMaxUpgradeIdDict[weapon];
-                //    }
-                //}
             }
+
+            return preserve;
         }
     }
 }
