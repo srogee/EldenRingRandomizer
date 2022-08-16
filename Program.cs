@@ -16,7 +16,7 @@ namespace EldenRingItemRandomizer
 
             if (!Directory.Exists(preferences.GameInstallDirectory))
             {
-                Console.WriteLine("Game install directory is not set or does not exist");
+                Console.WriteLine("Game install directory is not set or does not exist. Set it in preferences.json.");
                 return;
             }
 
@@ -25,7 +25,7 @@ namespace EldenRingItemRandomizer
 
             if (!File.Exists(regulationInPath))
             {
-                Console.WriteLine("regulation.bin.bak file not found in game install directory");
+                Console.WriteLine("regulation.bin.bak file not found in game install directory. Copy the vanilla regulation.bin and rename it to regulation.bin.bak.");
                 return;
             }
 
@@ -42,7 +42,7 @@ namespace EldenRingItemRandomizer
                 int seed = 0;
                 if (ConsolePrompt.Bool("Generate random seed"))
                 {
-                    seed = new Random().Next();
+                    seed = GenerateSeed();
                 }
                 else
                 {
@@ -51,14 +51,20 @@ namespace EldenRingItemRandomizer
                 randomizerParams = new ItemRandomizerParams()
                 {
                     Seed = seed,
-                    WeaponBaseDamageMultiplier = ConsolePrompt.Float("Weapon Base Damage Multiplier"),
-                    WeaponScalingMultiplier = ConsolePrompt.Float("Weapon Scaling Multiplier")
+                    WeaponBaseDamageMultiplier = ConsolePrompt.Float("Weapon Base Damage Multiplier", 1),
+                    WeaponScalingMultiplier = ConsolePrompt.Float("Weapon Scaling Multiplier", 1)
                 };
             }
             else
             {
                 var randomizerParamsJson = ConsolePrompt.String("Enter randomizer params JSON string");
-                randomizerParams = JSON.Parse<ItemRandomizerParams>(randomizerParamsJson);
+                randomizerParams = JSON.Parse<ItemRandomizerParams>(randomizerParamsJson, out bool success);
+
+                if (!success)
+                {
+                    randomizerParams.Seed = GenerateSeed();
+                    Console.WriteLine("Using default randomizer params");
+                }
             }
 
             Console.WriteLine();
@@ -77,12 +83,21 @@ namespace EldenRingItemRandomizer
             Console.WriteLine();
             Console.WriteLine("Share this JSON string with others:");
             Console.WriteLine(shareableParamsJson);
+
+            Console.WriteLine();
+            Console.Write("Press any key to close...");
+            Console.ReadLine();
 #endif
         }
 
         private static void DrawProgressBar(float percent, string message)
         {
             Console.Write($"\r{message} ({(percent * 100).ToString("F0")}%)                     ");
+        }
+
+        private static int GenerateSeed()
+        {
+            return new Random().Next(1000000000);
         }
     }
 }
