@@ -8,12 +8,58 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+
+/* TODO
+ * Remove extraneous starting items (spirit calling bell, etc)
+ * Make params editable
+ * Make frontend
+ */
 
 namespace EldenRingItemRandomizer
 {
+    struct TaskDefinition
+    {
+        public string Name;
+        public float OverallPercentage;
+
+        public TaskDefinition(string name, float overallPercentage = 0)
+        {
+            Name = name;
+            OverallPercentage = overallPercentage;
+        }
+    }
+
     class ItemRandomizer
     {
+        public ItemRandomizer(ItemRandomizerParams options)
+        {
+            Options = options;
+        }
+
+        private static TaskDefinition[] Tasks = new TaskDefinition[] {
+            new TaskDefinition("Loading regulation file"),
+            new TaskDefinition("Modifying weapons"),
+            new TaskDefinition("Modifying spells"),
+            new TaskDefinition("Modifying reinforce params"),
+            new TaskDefinition("Removing enemy items"),
+            new TaskDefinition("Randomizing map items"),
+            new TaskDefinition("Randomizing shop items"),
+            new TaskDefinition("Randomizing starting classes"),
+            new TaskDefinition("Saving regulation file"),
+        };
+
+        private void UpdateProgress(int taskIndex, float taskProgress)
+        {
+            OnProgressChanged((taskIndex + taskProgress) / Tasks.Length, Tasks[taskIndex].Name);
+        }
+
+        public delegate void ProgressChangedEvent(float precent, string message);
+        public ProgressChangedEvent OnProgressChanged;
+
+        private ItemRandomizerParams Options;
+
         private Dictionary<int, EquipParamWeapon> ReverseWeaponIndex = new Dictionary<int, EquipParamWeapon>();
         private Dictionary<EquipParamWeapon, int> WeaponMaxUpgradeIdDict = new Dictionary<EquipParamWeapon, int>();
         private RegulationParams RegulationParams;
@@ -48,58 +94,6 @@ namespace EldenRingItemRandomizer
 
         private GameData GameData;
 
-        private ItemTypeAndWeight[] ChurchWeights = new ItemTypeAndWeight[]
-        {
-            new ItemTypeAndWeight(ItemType.Weapon, 2f),
-            new ItemTypeAndWeight(ItemType.SpiritAsh, 1.0f),
-            new ItemTypeAndWeight(ItemType.AshOfWar, 1.0f),
-            new ItemTypeAndWeight(ItemType.Runes, 0.5f, true),
-        };
-
-        private ItemTypeAndWeight[] ScarabWeights = new ItemTypeAndWeight[]
-        {
-            new ItemTypeAndWeight(ItemType.PhysickTear, 1.0f),
-            new ItemTypeAndWeight(ItemType.Talisman, 1.0f),
-            new ItemTypeAndWeight(ItemType.AshOfWar, 1.0f),
-            new ItemTypeAndWeight(ItemType.Runes, 0.5f, true),
-        };
-
-        private ItemTypeAndWeight[] MinorBossWeights = new ItemTypeAndWeight[]
-        {
-            new ItemTypeAndWeight(ItemType.Weapon, 2f),
-            new ItemTypeAndWeight(ItemType.SpiritAsh, 1.0f),
-            new ItemTypeAndWeight(ItemType.AshOfWar, 1.0f),
-            new ItemTypeAndWeight(ItemType.Talisman, 1.0f),
-            new ItemTypeAndWeight(ItemType.Runes, 0.5f, true),
-        };
-
-        private ItemTypeAndWeight[] CarriageWeights = new ItemTypeAndWeight[]
-        {
-            new ItemTypeAndWeight(ItemType.Weapon, 2f),
-            new ItemTypeAndWeight(ItemType.SpiritAsh, 1.0f),
-            new ItemTypeAndWeight(ItemType.Runes, 0.5f, true),
-        };
-
-        private ItemTypeAndWeight[] MajorBossWeights = new ItemTypeAndWeight[]
-        {
-            new ItemTypeAndWeight(ItemType.Weapon, 2f),
-            new ItemTypeAndWeight(ItemType.SpiritAsh, 1.0f),
-            new ItemTypeAndWeight(ItemType.Runes, 0.5f, true),
-        };
-
-        private ItemTypeAndWeight[] GoldenTreeWeights = new ItemTypeAndWeight[]
-        {
-            new ItemTypeAndWeight(ItemType.PhysickTear, 1.0f),
-            new ItemTypeAndWeight(ItemType.AshOfWar, 1.0f),
-            new ItemTypeAndWeight(ItemType.Runes, 0.5f, true),
-        };
-
-        private ItemTypeAndWeight[] MapPlinthWeights = new ItemTypeAndWeight[]
-        {
-            new ItemTypeAndWeight(ItemType.Weapon, 2f),
-            new ItemTypeAndWeight(ItemType.Runes, 0.5f, true),
-        };
-
         private ItemTypeAndWeight[] ShopWeights = new ItemTypeAndWeight[]
         {
             new ItemTypeAndWeight(ItemType.Weapon, 0.5f),
@@ -118,51 +112,82 @@ namespace EldenRingItemRandomizer
             new ItemTypeAndWeight(ItemType.Runes, 0.25f),
         };
 
-        public void Run()
+        private void LoadRegulationFile()
         {
-            ChosenItems = new Dictionary<ItemType, HashSet<int>>();
-
-            Console.WriteLine($"Loading regulation file...");
+            int taskIndex = 0;
+            UpdateProgress(taskIndex, 0);
             RegulationParams = RegulationParams.Load(ParamClassGenerator.RegulationInPath);
-
             GameData = new GameData(RegulationParams);
+        }
 
-            int Seed = new Random().Next();
-            Console.WriteLine($"Using seed {Seed}");
-            RandomNumberGenerator = new Random(Seed);
-
-            // EquipParamGoods
-            // 8600 - 8618 maps
-
-            // Gather info about max upgrade levels and remove stat requirements
-            Console.WriteLine($"Modifying weapons...");
-            foreach (var weapon in RegulationParams.EquipParamWeapon)
+        private void ModifyWeapons()
+        {
+            int taskIndex = 1;
+            UpdateProgress(taskIndex, 0);
+            var weapons = RegulationParams.EquipParamWeapon;
+            int count = weapons.Count();
+            for (int i = 0; i < count; i++)
             {
-                ProcessWeapon(weapon);
+                UpdateProgress(taskIndex, i / (float)count);
+                ProcessWeapon(weapons[i]);
             }
+        }
 
-            // Remove stat requirements
-            Console.WriteLine($"Modifying spells...");
-            foreach (var spell in RegulationParams.Magic)
+        private void ModifySpells()
+        {
+            int taskIndex = 2;
+            UpdateProgress(taskIndex, 0);
+            var spells = RegulationParams.Magic;
+            int count = spells.Count();
+            for (int i = 0; i < count; i++)
             {
-                ProcessSpell(spell);
+                UpdateProgress(taskIndex, i / (float)count);
+                ProcessSpell(spells[i]);
             }
+        }
 
-            Console.WriteLine($"Modifying item lots...");
-            // Remove most items from the game
-            foreach (var itemLot in RegulationParams.ItemLotParam_enemy)
+        private void ModifyReinforceParams()
+        {
+            int taskIndex = 3;
+            UpdateProgress(taskIndex, 0);
+            var reinforceParamWeapons = RegulationParams.ReinforceParamWeapon;
+            int count = reinforceParamWeapons.Count();
+            for (int i = 0; i < count; i++)
             {
-                ProcessItemLot(itemLot);
+                UpdateProgress(taskIndex, i / (float)count);
+                ProcessReinforceParamWeapon(reinforceParamWeapons[i]);
             }
+        }
 
-            foreach (var itemLot in RegulationParams.ItemLotParam_map)
+        private void RemoveEnemyItemLots()
+        {
+            int taskIndex = 4;
+            UpdateProgress(taskIndex, 0);
+            var enemyItemLots = RegulationParams.ItemLotParam_enemy;
+            int count = enemyItemLots.Count();
+            for (int i = 0; i < count; i++)
             {
+                UpdateProgress(taskIndex, i / (float)count);
+                ProcessItemLot(enemyItemLots[i]);
+            }
+        }
+
+        private void RandomizeMapItemLots()
+        {
+            int taskIndex = 5;
+            UpdateProgress(taskIndex, 0);
+            var mapItemLots = RegulationParams.ItemLotParam_map;
+            int count = mapItemLots.Count();
+            for (int i = 0; i < count; i++)
+            {
+                UpdateProgress(taskIndex, i / (float)count);
+                var itemLot = mapItemLots[i];
                 if (itemLot.Id == 2000 || itemLot.Id == 2001)
                 {
                     // Flasks
                     continue;
                 }
-                
+
                 var preserveItem = ProcessItemLot(itemLot);
                 if (!preserveItem)
                 {
@@ -170,35 +195,206 @@ namespace EldenRingItemRandomizer
                 }
             }
 
-            // Add back in good items
-            //RandomizeItemGroups(GameData.TeardropScarabs, ScarabWeights, GoodWeaponTypes);
-            //RandomizeItemGroups(GameData.MajorBosses, MajorBossWeights, GoodWeaponTypes);
-            //RandomizeItemGroups(GameData.MinorBosses, MinorBossWeights, GoodWeaponTypes);
-            //RandomizeItemGroups(GameData.Churches, ChurchWeights, GoodWeaponTypes);
-            //RandomizeItemGroups(GameData.Carriages, CarriageWeights, GoodWeaponTypes);
-            //RandomizeItemGroups(GameData.MapPlinths, MapPlinthWeights, GoodWeaponTypes);
-            //RandomizeItemGroups(GameData.GoldenTrees, GoldenTreeWeights, GoodWeaponTypes);
-            //AddNiceStartingItems();
             GivePlayerMaxFlasks();
+        }
 
-            ChosenItems.Clear(); // allow duplicates between world and shop.
-            Console.WriteLine($"Modifying shop inventories...");
+        private void RandomizeShopItems()
+        {
+            int taskIndex = 6;
+            UpdateProgress(taskIndex, 0);
             var shuffledShopLineup = RegulationParams.ShopLineupParam.ToArray();
             Shuffle(shuffledShopLineup);
-            foreach (var shopLineup in shuffledShopLineup)
+            int count = shuffledShopLineup.Count();
+            for (int i = 0; i < count; i++)
             {
-                ProcessShopLineup(shopLineup);
+                UpdateProgress(taskIndex, i / (float)count);
+                ProcessShopLineup(shuffledShopLineup[i]);
             }
-            AddItemsToTwinMaidenHusks();
 
+            AddItemsToTwinMaidenHusks();
+        }
+
+        private void RandomizeStartingClasses()
+        {
+            int taskIndex = 7;
+            UpdateProgress(taskIndex, 0);
             ChosenItems.Clear(); // allow duplicates between world and starting classes.
             ModifyStartingGifts();
-            ModifyStartingClasses();
+            for (int classId = 3000; classId <= 3009; classId++)
+            {
+                UpdateProgress(taskIndex, (classId - 3000) / 10.0f);
+                var startingClass = RegulationParams.CharaInitParam[classId];
 
-            Console.WriteLine($"Saving regulation file...");
+                startingClass.EquippedAccessorySlot1 = GetRandomItemOfType(ItemType.Talisman, false).Id;
+                startingClass.EquippedAccessorySlot2 = GetRandomItemOfType(ItemType.Talisman, false).Id;
+
+                startingClass.EquippedWeaponRightPrimary = -1;
+                startingClass.EquippedWeaponRightSecondary = -1;
+                startingClass.EquippedWeaponRightTertiary = -1;
+                startingClass.EquippedWeaponLeftPrimary = -1;
+                startingClass.EquippedWeaponLeftSecondary = -1;
+                startingClass.EquippedWeaponLeftTertiary = -1;
+
+                // Wretch stats
+                startingClass.Level = 1;
+                startingClass.Vigor = 30;
+                startingClass.Attunement = 20;
+                startingClass.Endurance = 10;
+                startingClass.Strength = 10;
+                startingClass.Dexterity = 10;
+                startingClass.Intelligence = 10;
+                startingClass.Faith = 10;
+                startingClass.Arcane = 10;
+
+                // Lantern
+                startingClass.EquippedItemSlot1 = 2070;
+                startingClass.EquippedItemSlot1Amount = 1;
+
+                // Stonesword key
+                startingClass.EquippedItemSlot2 = 8000;
+                startingClass.EquippedItemSlot2Amount = 10;
+
+                // Spirit ashes
+                // TODO - consider making this only give bad spirit ashes
+                startingClass.EquippedItemSlot3 = GetRandomItemOfType(ItemType.SpiritAsh, false).Id;
+                startingClass.EquippedItemSlot3Amount = 1;
+
+                // Physick Tears
+                startingClass.EquippedItemSlot4 = GetRandomItemOfType(ItemType.PhysickTear, false).Id;
+                startingClass.EquippedItemSlot4Amount = 1;
+
+                startingClass.EquippedItemSlot5 = GetRandomItemOfType(ItemType.PhysickTear, false).Id;
+                startingClass.EquippedItemSlot5Amount = 1;
+
+                // Spirit calling bell
+                startingClass.EquippedItemSlot6 = 8158;
+                startingClass.EquippedItemSlot6Amount = 1;
+
+                // Talisman pouches
+                startingClass.EquippedItemSlot7 = 10040;
+                startingClass.EquippedItemSlot7Amount = 3;
+
+                // Memory stones
+                startingClass.EquippedItemSlot8 = 10030;
+                startingClass.EquippedItemSlot8Amount = 9;
+
+                // Flash of wondrous physick
+                startingClass.StoredItemSlot3 = 251;
+                startingClass.StoredItemSlot3Count = 1;
+
+                // Spectral steed whistle
+                startingClass.StoredItemSlot4 = 130;
+                startingClass.StoredItemSlot4Count = 1;
+
+                startingClass.HPFlaskMaxPossessionLimit = 12;
+                startingClass.FPFlaskMaxPossessionLimit = 2;
+            }
+
+            var allMeleeWeapons = new WepType[] {
+                WepType.Dagger,
+                WepType.StraightSword,
+                WepType.Greatsword,
+                WepType.ColossalSword,
+                WepType.CurvedSword,
+                WepType.CurvedGreatsword,
+                WepType.Katana,
+                WepType.Twinblade,
+                WepType.ThrustingSword,
+                WepType.HeavyThrustingSword,
+                WepType.Axe,
+                WepType.Greataxe,
+                WepType.Hammer,
+                WepType.GreatHammer,
+                WepType.Flail,
+                WepType.Spear,
+                WepType.HeavySpear,
+                WepType.Halberd,
+                WepType.Scythe,
+                WepType.Fist,
+                WepType.Claw,
+                WepType.Whip,
+                WepType.ColossalWeapon
+            };
+
+            var moreStrBasedMeleeWeapons = new WepType[] {
+                WepType.StraightSword,
+                WepType.Greatsword,
+                WepType.ColossalSword,
+                WepType.Axe,
+                WepType.Greataxe,
+                WepType.Hammer,
+                WepType.GreatHammer,
+                WepType.Spear,
+                WepType.HeavySpear,
+                WepType.Halberd,
+                WepType.Scythe,
+                WepType.Fist,
+                WepType.ColossalWeapon
+            };
+
+            var moreDexBasedMeleeWeapons = new WepType[]
+            {
+                WepType.Dagger,
+                WepType.CurvedSword,
+                WepType.CurvedGreatsword,
+                WepType.Katana,
+                WepType.Twinblade,
+                WepType.ThrustingSword,
+                WepType.HeavyThrustingSword,
+                WepType.Flail,
+                WepType.Claw,
+                WepType.Whip
+            };
+
+            var shields = new WepType[] {
+                WepType.SmallShield,
+                WepType.MediumShield,
+                WepType.Greatshield
+            };
+
+            // Vagabond
+            PickStartingClassWeapons(RegulationParams.CharaInitParam[3000], allMeleeWeapons, shields);
+            // Warrior
+            PickStartingClassWeapons(RegulationParams.CharaInitParam[3001], moreDexBasedMeleeWeapons, shields);
+            // Hero
+            PickStartingClassWeapons(RegulationParams.CharaInitParam[3002], moreStrBasedMeleeWeapons, shields);
+            // Bandit
+            PickStartingClassWeapons(RegulationParams.CharaInitParam[3003], moreDexBasedMeleeWeapons, shields);
+            // Astrologer
+            PickStartingClassWeapons(RegulationParams.CharaInitParam[3004], allMeleeWeapons, shields, WepType.Staff);
+            // Prophet
+            PickStartingClassWeapons(RegulationParams.CharaInitParam[3005], allMeleeWeapons, shields, WepType.Seal);
+            // Confessor
+            PickStartingClassWeapons(RegulationParams.CharaInitParam[3006], allMeleeWeapons, shields, WepType.Seal);
+            // Samurai
+            PickStartingClassWeapons(RegulationParams.CharaInitParam[3007], moreDexBasedMeleeWeapons, shields);
+            // Prisoner
+            PickStartingClassWeapons(RegulationParams.CharaInitParam[3008], allMeleeWeapons, shields, WepType.Staff);
+            // Wretch
+            PickStartingClassWeapons(RegulationParams.CharaInitParam[3009], allMeleeWeapons, shields);
+        }
+
+        private void SaveRegulationFile()
+        {
+            int taskIndex = 8;
+            UpdateProgress(taskIndex, 0);
             RegulationParams.Save(ParamClassGenerator.RegulationOutPath);
+        }
 
-            Console.WriteLine($"Done");
+        public void Run()
+        {
+            ChosenItems = new Dictionary<ItemType, HashSet<int>>();
+            RandomNumberGenerator = new Random(Options.Seed);
+
+            LoadRegulationFile();
+            ModifyWeapons();
+            ModifySpells();
+            ModifyReinforceParams();
+            RemoveEnemyItemLots();
+            RandomizeMapItemLots();
+            RandomizeShopItems();
+            RandomizeStartingClasses();
+            SaveRegulationFile();
         }
 
         private static void ProcessSpell(MagicParam spell)
@@ -248,7 +444,7 @@ namespace EldenRingItemRandomizer
                 itemLot.ItemAmount1 = 1;
             }
 
-            Console.WriteLine($"{itemLot.RowName}\n\tReplaced with {GetFriendlyItemName(item)}");
+            //Console.WriteLine($"{itemLot.RowName}\n\tReplaced with {GetFriendlyItemName(item)}");
         }
 
         private string GetFriendlyItemName(ItemDescription desc)
@@ -364,7 +560,7 @@ namespace EldenRingItemRandomizer
             if (GameData.ShopLineupIds.Contains(shopLineup.Id))
             {
                 var item = GetRandomItemWeighted(ShopWeights, GoodWeaponTypes, false);
-                Console.WriteLine($"{shopLineup.RowName}\n\tReplaced with {GetFriendlyItemName(item)}");
+                //Console.WriteLine($"{shopLineup.RowName}\n\tReplaced with {GetFriendlyItemName(item)}");
                 if (item != null)
                 {
                     clearRow = false;
@@ -581,7 +777,7 @@ namespace EldenRingItemRandomizer
 
         private void ModifyStartingGifts()
         {
-            Console.WriteLine($"Modifying starting gifts...");
+            //Console.WriteLine($"Modifying starting gifts...");
             for (int giftId = 2400; giftId <= 2409; giftId++)
             {
                 var gift = RegulationParams.CharaInitParam[giftId];
@@ -589,162 +785,6 @@ namespace EldenRingItemRandomizer
                 gift.EquippedItemSlot3 = -1;
                 gift.EquippedItemSlot3Amount = 0;
             }
-        }
-
-        private void ModifyStartingClasses()
-        {
-            Console.WriteLine($"Modifying starting classes...");
-            for (int classId = 3000; classId <= 3009; classId++)
-            {
-                var startingClass = RegulationParams.CharaInitParam[classId];
-
-                startingClass.EquippedAccessorySlot1 = GetRandomItemOfType(ItemType.Talisman, false).Id;
-                startingClass.EquippedAccessorySlot2 = GetRandomItemOfType(ItemType.Talisman, false).Id;
-
-                startingClass.EquippedWeaponRightPrimary = -1;
-                startingClass.EquippedWeaponRightSecondary = -1;
-                startingClass.EquippedWeaponRightTertiary = -1;
-                startingClass.EquippedWeaponLeftPrimary = -1;
-                startingClass.EquippedWeaponLeftSecondary = -1;
-                startingClass.EquippedWeaponLeftTertiary = -1;
-
-                // Wretch stats
-                startingClass.Level = 1;
-                startingClass.Vigor = 30;
-                startingClass.Attunement = 20;
-                startingClass.Endurance = 10;
-                startingClass.Strength = 10;
-                startingClass.Dexterity = 10;
-                startingClass.Intelligence = 10;
-                startingClass.Faith = 10;
-                startingClass.Arcane = 10;
-
-                // Lantern
-                startingClass.EquippedItemSlot1 = 2070;
-                startingClass.EquippedItemSlot1Amount = 1;
-
-                // Stonesword key
-                startingClass.EquippedItemSlot2 = 8000;
-                startingClass.EquippedItemSlot2Amount = 10;
-
-                // Spirit ashes
-                // TODO - consider making this only give bad spirit ashes
-                startingClass.EquippedItemSlot3 = GetRandomItemOfType(ItemType.SpiritAsh, false).Id;
-                startingClass.EquippedItemSlot3Amount = 1;
-
-                // Physick Tears
-                startingClass.EquippedItemSlot4 = GetRandomItemOfType(ItemType.PhysickTear, false).Id;
-                startingClass.EquippedItemSlot4Amount = 1;
-
-                startingClass.EquippedItemSlot5 = GetRandomItemOfType(ItemType.PhysickTear, false).Id;
-                startingClass.EquippedItemSlot5Amount = 1;
-
-                // Spirit calling bell
-                startingClass.EquippedItemSlot6 = 8158;
-                startingClass.EquippedItemSlot6Amount = 1;
-
-                // Talisman pouches
-                startingClass.EquippedItemSlot7 = 10040;
-                startingClass.EquippedItemSlot7Amount = 3;
-
-                // Memory stones
-                startingClass.EquippedItemSlot8 = 10030;
-                startingClass.EquippedItemSlot8Amount = 9;
-
-                // Flash of wondrous physick
-                startingClass.StoredItemSlot3 = 251;
-                startingClass.StoredItemSlot3Count = 1;
-
-                // Spectral steed whistle
-                startingClass.StoredItemSlot4 = 130;
-                startingClass.StoredItemSlot4Count = 1;
-
-                startingClass.HPFlaskMaxPossessionLimit = 12;
-                startingClass.FPFlaskMaxPossessionLimit = 2;
-            }
-
-            var allMeleeWeapons = new WepType[] {
-                WepType.Dagger,
-                WepType.StraightSword,
-                WepType.Greatsword,
-                WepType.ColossalSword,
-                WepType.CurvedSword,
-                WepType.CurvedGreatsword,
-                WepType.Katana,
-                WepType.Twinblade,
-                WepType.ThrustingSword,
-                WepType.HeavyThrustingSword,
-                WepType.Axe,
-                WepType.Greataxe,
-                WepType.Hammer,
-                WepType.GreatHammer,
-                WepType.Flail,
-                WepType.Spear,
-                WepType.HeavySpear,
-                WepType.Halberd,
-                WepType.Scythe,
-                WepType.Fist,
-                WepType.Claw,
-                WepType.Whip,
-                WepType.ColossalWeapon
-            };
-
-            var moreStrBasedMeleeWeapons = new WepType[] {
-                WepType.StraightSword,
-                WepType.Greatsword,
-                WepType.ColossalSword,
-                WepType.Axe,
-                WepType.Greataxe,
-                WepType.Hammer,
-                WepType.GreatHammer,
-                WepType.Spear,
-                WepType.HeavySpear,
-                WepType.Halberd,
-                WepType.Scythe,
-                WepType.Fist,
-                WepType.ColossalWeapon
-            };
-
-            var moreDexBasedMeleeWeapons = new WepType[]
-            {
-                WepType.Dagger,
-                WepType.CurvedSword,
-                WepType.CurvedGreatsword,
-                WepType.Katana,
-                WepType.Twinblade,
-                WepType.ThrustingSword,
-                WepType.HeavyThrustingSword,
-                WepType.Flail,
-                WepType.Claw,
-                WepType.Whip
-            };
-
-            var shields = new WepType[] {
-                WepType.SmallShield,
-                WepType.MediumShield,
-                WepType.Greatshield
-            };
-
-            // Vagabond
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3000], allMeleeWeapons, shields);
-            // Warrior
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3001], moreDexBasedMeleeWeapons, shields);
-            // Hero
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3002], moreStrBasedMeleeWeapons, shields);
-            // Bandit
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3003], moreDexBasedMeleeWeapons, shields);
-            // Astrologer
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3004], allMeleeWeapons, shields, WepType.Staff);
-            // Prophet
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3005], allMeleeWeapons, shields, WepType.Seal);
-            // Confessor
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3006], allMeleeWeapons, shields, WepType.Seal);
-            // Samurai
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3007], moreDexBasedMeleeWeapons, shields);
-            // Prisoner
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3008], allMeleeWeapons, shields, WepType.Staff);
-            // Wretch
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3009], allMeleeWeapons, shields);
         }
 
         void PickStartingClassWeapons(CharaInitParam startingClass, WepType[] rightHand, WepType[] leftHand, WepType guaranteedRightHand = WepType.None)
@@ -777,6 +817,22 @@ namespace EldenRingItemRandomizer
                     var spellId = GetRandomItemOfType(guaranteedRightHand == WepType.Staff ? ItemType.Sorcery : ItemType.Incantation, false).Id;
                     startingClass[$"EquippedSpellSlot{i + 1}"].Value = spellId;
                 }
+            }
+        }
+
+        void ProcessReinforceParamWeapon(ReinforceParamWeapon reinforceParamWeapon)
+        {
+            var damagePercentNames = new string[] { "DamagePercentPhysical", "DamagePercentMagic", "DamagePercentFire", "DamagePercentHoly", "DamagePercentLightning" };
+            var scalingPercentNames = new string[] { "CorrectionPercentSTR", "CorrectionPercentARC", "CorrectionPercentDEX", "CorrectionPercentINT", "CorrectionPercentFTH" };
+
+            foreach (var name in damagePercentNames)
+            {
+                reinforceParamWeapon[name].Value = (float)reinforceParamWeapon[name].Value * Options.WeaponBaseDamageMultiplier; 
+            }
+
+            foreach (var name in scalingPercentNames)
+            {
+                reinforceParamWeapon[name].Value = (float)reinforceParamWeapon[name].Value * Options.WeaponScalingMultiplier;
             }
         }
 
