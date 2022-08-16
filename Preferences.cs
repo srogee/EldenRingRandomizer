@@ -8,7 +8,7 @@ namespace EldenRingItemRandomizer
 {
     internal class Preferences
     {
-        public string Test = "hello";
+        public string GameInstallDirectory;
 
         public Preferences() { }
     }
