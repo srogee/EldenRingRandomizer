@@ -8,6 +8,19 @@ namespace EldenRingItemRandomizer
 {
     internal class ConsolePrompt
     {
+        public static int Option(string prompt, IEnumerable<string> options, int defaultValue = 0)
+        {
+            var value = PromptValue($"{prompt} ({string.Join(", ", options.Select((option, index) => $"{index+1}-{option}"))})");
+            if (int.TryParse(value, out int result) && result >= 1 && result <= options.Count())
+            {
+                return result - 1;
+            }
+            else
+            {
+                return defaultValue;
+            }
+        }
+
         public static string String(string prompt, string defaultValue = "")
         {
             var value = PromptValue(prompt);

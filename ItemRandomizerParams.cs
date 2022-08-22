@@ -9,7 +9,8 @@ namespace EldenRingItemRandomizer
 {
     internal class ItemRandomizerParams
     {
-        public int Seed = 0;
+        public string Version = Program.Version;
+        public int Seed = -1; // Invalid
         public float WeaponBaseDamageMultiplier = 1.0f;
         public float WeaponScalingMultiplier = 1.0f;
 

@@ -243,7 +243,7 @@ namespace EldenRingItemRandomizer
                 // Wretch stats
                 startingClass.Level = 1;
                 startingClass.Vigor = 30;
-                startingClass.Attunement = 20;
+                startingClass.Attunement = 10;
                 startingClass.Endurance = 10;
                 startingClass.Strength = 10;
                 startingClass.Dexterity = 10;
@@ -256,40 +256,40 @@ namespace EldenRingItemRandomizer
                 startingClass.EquippedItemSlot1Amount = 1;
 
                 // Stonesword key
-                startingClass.EquippedItemSlot2 = 8000;
-                startingClass.EquippedItemSlot2Amount = 10;
+                //startingClass.EquippedItemSlot2 = 8000;
+                //startingClass.EquippedItemSlot2Amount = 10;
 
                 // Spirit ashes
                 // TODO - consider making this only give bad spirit ashes
-                startingClass.EquippedItemSlot3 = GetRandomItemOfType(ItemType.SpiritAsh, false).Id;
-                startingClass.EquippedItemSlot3Amount = 1;
+                //startingClass.EquippedItemSlot3 = GetRandomItemOfType(ItemType.SpiritAsh, false).Id;
+                //startingClass.EquippedItemSlot3Amount = 1;
 
-                // Physick Tears
-                startingClass.EquippedItemSlot4 = GetRandomItemOfType(ItemType.PhysickTear, false).Id;
-                startingClass.EquippedItemSlot4Amount = 1;
+                //// Physick Tears
+                //startingClass.EquippedItemSlot4 = GetRandomItemOfType(ItemType.PhysickTear, false).Id;
+                //startingClass.EquippedItemSlot4Amount = 1;
 
-                startingClass.EquippedItemSlot5 = GetRandomItemOfType(ItemType.PhysickTear, false).Id;
-                startingClass.EquippedItemSlot5Amount = 1;
+                //startingClass.EquippedItemSlot5 = GetRandomItemOfType(ItemType.PhysickTear, false).Id;
+                //startingClass.EquippedItemSlot5Amount = 1;
 
                 // Spirit calling bell
-                startingClass.EquippedItemSlot6 = 8158;
-                startingClass.EquippedItemSlot6Amount = 1;
+                //startingClass.EquippedItemSlot6 = 8158;
+                //startingClass.EquippedItemSlot6Amount = 1;
 
-                // Talisman pouches
-                startingClass.EquippedItemSlot7 = 10040;
-                startingClass.EquippedItemSlot7Amount = 3;
+                //// Talisman pouches
+                //startingClass.EquippedItemSlot7 = 10040;
+                //startingClass.EquippedItemSlot7Amount = 3;
 
                 // Memory stones
-                startingClass.EquippedItemSlot8 = 10030;
-                startingClass.EquippedItemSlot8Amount = 9;
+                //startingClass.EquippedItemSlot8 = 10030;
+                //startingClass.EquippedItemSlot8Amount = 9;
 
-                // Flash of wondrous physick
-                startingClass.StoredItemSlot3 = 251;
-                startingClass.StoredItemSlot3Count = 1;
+                //// Flash of wondrous physick
+                //startingClass.StoredItemSlot3 = 251;
+                //startingClass.StoredItemSlot3Count = 1;
 
-                // Spectral steed whistle
-                startingClass.StoredItemSlot4 = 130;
-                startingClass.StoredItemSlot4Count = 1;
+                //// Spectral steed whistle
+                //startingClass.StoredItemSlot4 = 130;
+                //startingClass.StoredItemSlot4Count = 1;
 
                 startingClass.HPFlaskMaxPossessionLimit = 12;
                 startingClass.FPFlaskMaxPossessionLimit = 2;
@@ -357,26 +357,27 @@ namespace EldenRingItemRandomizer
                 WepType.Greatshield
             };
 
+            // Currently, all the same
             // Vagabond
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3000], allMeleeWeapons, shields);
+            PickStartingClassWeapons(RegulationParams.CharaInitParam[3000], allMeleeWeapons, allMeleeWeapons);
             // Warrior
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3001], moreDexBasedMeleeWeapons, shields);
+            PickStartingClassWeapons(RegulationParams.CharaInitParam[3001], allMeleeWeapons, allMeleeWeapons);
             // Hero
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3002], moreStrBasedMeleeWeapons, shields);
+            PickStartingClassWeapons(RegulationParams.CharaInitParam[3002], allMeleeWeapons, allMeleeWeapons);
             // Bandit
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3003], moreDexBasedMeleeWeapons, shields);
+            PickStartingClassWeapons(RegulationParams.CharaInitParam[3003], allMeleeWeapons, allMeleeWeapons);
             // Astrologer
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3004], allMeleeWeapons, shields, WepType.Staff);
+            PickStartingClassWeapons(RegulationParams.CharaInitParam[3004], allMeleeWeapons, allMeleeWeapons);
             // Prophet
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3005], allMeleeWeapons, shields, WepType.Seal);
+            PickStartingClassWeapons(RegulationParams.CharaInitParam[3005], allMeleeWeapons, allMeleeWeapons);
             // Confessor
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3006], allMeleeWeapons, shields, WepType.Seal);
+            PickStartingClassWeapons(RegulationParams.CharaInitParam[3006], allMeleeWeapons, allMeleeWeapons);
             // Samurai
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3007], moreDexBasedMeleeWeapons, shields);
+            PickStartingClassWeapons(RegulationParams.CharaInitParam[3007], allMeleeWeapons, allMeleeWeapons);
             // Prisoner
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3008], allMeleeWeapons, shields, WepType.Staff);
+            PickStartingClassWeapons(RegulationParams.CharaInitParam[3008], allMeleeWeapons, allMeleeWeapons);
             // Wretch
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3009], allMeleeWeapons, shields);
+            PickStartingClassWeapons(RegulationParams.CharaInitParam[3009], allMeleeWeapons, allMeleeWeapons);
         }
 
         private void SaveRegulationFile()
@@ -800,7 +801,7 @@ namespace EldenRingItemRandomizer
         void PickStartingClassWeapons(CharaInitParam startingClass, WepType[] rightHand, WepType[] leftHand, WepType guaranteedRightHand = WepType.None)
         {
             var howManyRight = 3;
-            var howManyLeft = 1;
+            var howManyLeft = 3;
             string[] slots = new string[] { "Primary", "Secondary", "Tertiary" };
 
             for (int i = 0; i < howManyRight; i++)
