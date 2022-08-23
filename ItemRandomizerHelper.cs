@@ -144,7 +144,7 @@ namespace EldenRingItemRandomizer
         private IEnumerable<int> GetPotentialArmorIdsForTypes(ProtectorCategory[] protectorTypes)
         {
             var typesHashset = new HashSet<ProtectorCategory>(protectorTypes);
-            return RegulationParams.EquipParamProtector.Where(weapon => weapon.RowName?.Length > 0 && typesHashset.Contains(weapon.ArmorCategory)).Select(weapon => weapon.Id);
+            return RegulationParams.EquipParamProtector.Where(armor => armor.RowName?.Length > 0 && typesHashset.Contains(armor.ArmorCategory)).Select(weapon => weapon.Id);
         }
     }
 

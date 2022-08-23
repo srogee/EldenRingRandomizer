@@ -24,6 +24,7 @@ namespace EldenRingItemRandomizer
 
     class ItemRandomizer
     {
+        private int CurrentTaskIndex = 0;
         private ItemRandomizerHelper Helper;
         private string RegulationInPath;
         private string RegulationOutPath;
@@ -38,6 +39,7 @@ namespace EldenRingItemRandomizer
         private static TaskDefinition[] Tasks = new TaskDefinition[] {
             new TaskDefinition("Loading regulation file"),
             new TaskDefinition("Modifying weapons"),
+            new TaskDefinition("Modifying armor"),
             new TaskDefinition("Modifying spells"),
             new TaskDefinition("Modifying reinforce params"),
             new TaskDefinition("Removing enemy items"),
@@ -49,13 +51,17 @@ namespace EldenRingItemRandomizer
 
         public void Run()
         {
+            var stopwatch = new System.Diagnostics.Stopwatch();
+            stopwatch.Start();
+
             ChosenItems = new Dictionary<ItemType, HashSet<int>>();
             RandomNumberGenerator = new Random(Options.Seed);
-            var stopwatch = new System.Diagnostics.Stopwatch();
+            CurrentTaskIndex = -1;
 
-            stopwatch.Start();
             LoadRegulationFile();
             ModifyWeapons();
+            Helper = new ItemRandomizerHelper(RandomNumberGenerator, GameData, RegulationParams, WeaponMaxUpgradeIdDict);
+            ModifyArmor();
             ModifySpells();
             ModifyReinforceParams();
             RemoveEnemyItemLots();
@@ -63,14 +69,15 @@ namespace EldenRingItemRandomizer
             RandomizeShopItems();
             RandomizeStartingClasses();
             SaveRegulationFile();
+
             stopwatch.Stop();
 
             OnProgressChanged(1, $"Done. Took {stopwatch.ElapsedMilliseconds / 1000f:F2}s");
         }
 
-        private void UpdateProgress(int taskIndex, float taskProgress)
+        private void UpdateProgress(float taskProgress)
         {
-            OnProgressChanged((taskIndex + taskProgress) / Tasks.Length, Tasks[taskIndex].Name);
+            OnProgressChanged((CurrentTaskIndex + taskProgress) / Tasks.Length, Tasks[CurrentTaskIndex].Name);
         }
 
         public delegate void ProgressChangedEvent(float precent, string message);
@@ -132,22 +139,35 @@ namespace EldenRingItemRandomizer
 
         private void LoadRegulationFile()
         {
-            int taskIndex = 0;
-            UpdateProgress(taskIndex, 0);
+            CurrentTaskIndex++;
+            UpdateProgress(0);
             RegulationParams = RegulationParams.Load(RegulationInPath);
             GameData = new GameData(RegulationParams);
         }
 
         private void ModifyWeapons()
         {
-            int taskIndex = 1;
-            UpdateProgress(taskIndex, 0);
+            CurrentTaskIndex++;
+            UpdateProgress(0);
             var weapons = RegulationParams.EquipParamWeapon.ToArray();
             int count = weapons.Count();
             for (int i = 0; i < count; i++)
             {
-                UpdateProgress(taskIndex, i / (float)count);
+                UpdateProgress(i / (float)count);
                 ProcessWeapon(weapons[i]);
+            }
+        }
+
+        private void ModifyArmor()
+        {
+            CurrentTaskIndex++;
+            UpdateProgress(0);
+            var armor = RegulationParams.EquipParamProtector.ToArray();
+            int count = armor.Count();
+            for (int i = 0; i < count; i++)
+            {
+                UpdateProgress(i / (float)count);
+                ProcessArmor(armor[i]);
             }
 
             Helper = new ItemRandomizerHelper(RandomNumberGenerator, GameData, RegulationParams, WeaponMaxUpgradeIdDict);
@@ -155,53 +175,53 @@ namespace EldenRingItemRandomizer
 
         private void ModifySpells()
         {
-            int taskIndex = 2;
-            UpdateProgress(taskIndex, 0);
+            CurrentTaskIndex++;
+            UpdateProgress(0);
             var spells = RegulationParams.Magic.ToArray();
             int count = spells.Count();
             for (int i = 0; i < count; i++)
             {
-                UpdateProgress(taskIndex, i / (float)count);
+                UpdateProgress(i / (float)count);
                 ProcessSpell(spells[i]);
             }
         }
 
         private void ModifyReinforceParams()
         {
-            int taskIndex = 3;
-            UpdateProgress(taskIndex, 0);
+            CurrentTaskIndex++;
+            UpdateProgress(0);
             var reinforceParamWeapons = RegulationParams.ReinforceParamWeapon.ToArray();
             int count = reinforceParamWeapons.Count();
             for (int i = 0; i < count; i++)
             {
-                UpdateProgress(taskIndex, i / (float)count);
+                UpdateProgress(i / (float)count);
                 ProcessReinforceParamWeapon(reinforceParamWeapons[i]);
             }
         }
 
         private void RemoveEnemyItemLots()
         {
-            int taskIndex = 4;
-            UpdateProgress(taskIndex, 0);
+            CurrentTaskIndex++;
+            UpdateProgress(0);
             var enemyItemLots = RegulationParams.ItemLotParam_enemy.ToArray();
             int count = enemyItemLots.Count();
             for (int i = 0; i < count; i++)
             {
-                UpdateProgress(taskIndex, i / (float)count);
+                UpdateProgress(i / (float)count);
                 ProcessItemLot(enemyItemLots[i]);
             }
         }
 
         private void RandomizeMapItemLots()
         {
-            int taskIndex = 5;
-            UpdateProgress(taskIndex, 0);
+            CurrentTaskIndex++;
+            UpdateProgress(0);
             var mapItemLots = RegulationParams.ItemLotParam_map.ToArray();
             int count = mapItemLots.Count();
             var addlParams = new ItemAdditionalParams(GoodWeaponTypes, new ProtectorCategory[] { });
             for (int i = 0; i < count; i++)
             {
-                UpdateProgress(taskIndex, i / (float)count);
+                UpdateProgress(i / (float)count);
                 var itemLot = mapItemLots[i];
                 if (itemLot.Id == 2000 || itemLot.Id == 2001)
                 {
@@ -221,14 +241,14 @@ namespace EldenRingItemRandomizer
 
         private void RandomizeShopItems()
         {
-            int taskIndex = 6;
-            UpdateProgress(taskIndex, 0);
+            CurrentTaskIndex++;
+            UpdateProgress(0);
             var shuffledShopLineup = RegulationParams.ShopLineupParam.ToArray();
-            Shuffle(shuffledShopLineup);
+            RandomUtils.Shuffle(RandomNumberGenerator, shuffledShopLineup);
             int count = shuffledShopLineup.Count();
             for (int i = 0; i < count; i++)
             {
-                UpdateProgress(taskIndex, i / (float)count);
+                UpdateProgress(i / (float)count);
                 ProcessShopLineup(shuffledShopLineup[i]);
             }
 
@@ -237,17 +257,19 @@ namespace EldenRingItemRandomizer
 
         private void RandomizeStartingClasses()
         {
-            int taskIndex = 7;
-            UpdateProgress(taskIndex, 0);
+            CurrentTaskIndex++;
+            UpdateProgress(0);
             ChosenItems.Clear(); // allow duplicates between world and starting classes.
             ModifyStartingGifts();
             for (int classId = 3000; classId <= 3009; classId++)
             {
-                UpdateProgress(taskIndex, (classId - 3000) / 10.0f);
+                UpdateProgress((classId - 3000) / 10.0f);
                 var startingClass = RegulationParams.CharaInitParam[classId];
 
                 startingClass.EquippedAccessorySlot1 = Helper.GetRandomItemOfType(ItemType.Talisman, null, false).Id;
                 startingClass.EquippedAccessorySlot2 = Helper.GetRandomItemOfType(ItemType.Talisman, null, false).Id;
+                startingClass.EquippedAccessorySlot3 = Helper.GetRandomItemOfType(ItemType.Talisman, null, false).Id;
+                startingClass.EquippedAccessorySlot4 = Helper.GetRandomItemOfType(ItemType.Talisman, null, false).Id;
 
                 startingClass.EquippedWeaponRightPrimary = -1;
                 startingClass.EquippedWeaponRightSecondary = -1;
@@ -255,6 +277,11 @@ namespace EldenRingItemRandomizer
                 startingClass.EquippedWeaponLeftPrimary = -1;
                 startingClass.EquippedWeaponLeftSecondary = -1;
                 startingClass.EquippedWeaponLeftTertiary = -1;
+
+                startingClass.EquippedArmorArms = -1;
+                startingClass.EquippedArmorChest = -1;
+                startingClass.EquippedArmorHead = -1;
+                startingClass.EquippedArmorLegs = -1;
 
                 // Wretch stats
                 startingClass.Level = 1;
@@ -314,34 +341,31 @@ namespace EldenRingItemRandomizer
                 WepType.ColossalWeapon
             };
 
-            // Currently, all the same
-            // Vagabond
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3000], allMeleeWeapons, allMeleeWeapons);
-            // Warrior
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3001], allMeleeWeapons, allMeleeWeapons);
-            // Hero
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3002], allMeleeWeapons, allMeleeWeapons);
-            // Bandit
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3003], allMeleeWeapons, allMeleeWeapons);
-            // Astrologer
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3004], allMeleeWeapons, allMeleeWeapons);
-            // Prophet
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3005], allMeleeWeapons, allMeleeWeapons);
-            // Confessor
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3006], allMeleeWeapons, allMeleeWeapons);
-            // Samurai
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3007], allMeleeWeapons, allMeleeWeapons);
-            // Prisoner
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3008], allMeleeWeapons, allMeleeWeapons);
-            // Wretch
-            PickStartingClassWeapons(RegulationParams.CharaInitParam[3009], allMeleeWeapons, allMeleeWeapons);
+            for (int id = 3000; id <= 3009; id++)
+            {
+                PickStartingClassWeapons(RegulationParams.CharaInitParam[id], allMeleeWeapons, allMeleeWeapons);
+                PickStartingClassArmor(RegulationParams.CharaInitParam[id]);
+            }
+        }
+
+        private void PickStartingClassArmor(CharaInitParam charaInitParam)
+        {
+            charaInitParam.EquippedArmorHead = Helper.GetRandomItemOfType(ItemType.Armor, new ItemAdditionalParams(null, new ProtectorCategory[] { ProtectorCategory.Head }), false).Id;
+            charaInitParam.EquippedArmorChest = Helper.GetRandomItemOfType(ItemType.Armor, new ItemAdditionalParams(null, new ProtectorCategory[] { ProtectorCategory.Body }), false).Id;
+            charaInitParam.EquippedArmorArms = Helper.GetRandomItemOfType(ItemType.Armor, new ItemAdditionalParams(null, new ProtectorCategory[] { ProtectorCategory.Arms }), false).Id;
+            charaInitParam.EquippedArmorLegs = Helper.GetRandomItemOfType(ItemType.Armor, new ItemAdditionalParams(null, new ProtectorCategory[] { ProtectorCategory.Legs }), false).Id;
         }
 
         private void SaveRegulationFile()
         {
-            int taskIndex = 8;
-            UpdateProgress(taskIndex, 0);
+            CurrentTaskIndex++;
+            UpdateProgress(0);
             RegulationParams.Save(RegulationOutPath);
+        }
+
+        private void ProcessArmor(EquipParamProtector equipParamProtector)
+        {
+            equipParamProtector.Weight = 0;
         }
 
         private static void ProcessSpell(MagicParam spell)
@@ -368,7 +392,7 @@ namespace EldenRingItemRandomizer
         private void RandomizeItemGroups(IEnumerable<ItemLotGroup> groups, ItemTypeAndWeight[] weights, ItemAdditionalParams addlParams, bool withReplacement = false)
         {
             var shuffledGroups = groups.ToArray();
-            Shuffle(shuffledGroups);
+            RandomUtils.Shuffle(RandomNumberGenerator, shuffledGroups);
 
             foreach (var group in shuffledGroups)
             {
@@ -535,21 +559,6 @@ namespace EldenRingItemRandomizer
                 shopLineup.QuantityEventFlagID = 0;
                 shopLineup.VisibilityEventFlagID = 0;
                 shopLineup.AmountToSell = 0;
-            }
-        }
-
-        private void Shuffle<T>(T[] array)
-        {
-            int n = array.Length;
-            for (int i = 0; i < (n - 1); i++)
-            {
-                // Use Next on random instance with an argument.
-                // ... The argument is an exclusive bound.
-                //     So we will not go past the end of the array.
-                int r = i + RandomNumberGenerator.Next(n - i);
-                T t = array[r];
-                array[r] = array[i];
-                array[i] = t;
             }
         }
 
