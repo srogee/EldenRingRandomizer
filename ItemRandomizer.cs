@@ -7,15 +7,6 @@ using StronglyTypedParams;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-
-/* TODO
- * Remove extraneous starting items (spirit calling bell, etc)
- * Make params editable
- * Make frontend
- */
 
 namespace EldenRingItemRandomizer
 {
@@ -33,6 +24,7 @@ namespace EldenRingItemRandomizer
 
     class ItemRandomizer
     {
+        private ItemRandomizerHelper Helper;
         private string RegulationInPath;
         private string RegulationOutPath;
 
@@ -54,6 +46,27 @@ namespace EldenRingItemRandomizer
             new TaskDefinition("Randomizing starting classes"),
             new TaskDefinition("Saving regulation file"),
         };
+
+        public void Run()
+        {
+            ChosenItems = new Dictionary<ItemType, HashSet<int>>();
+            RandomNumberGenerator = new Random(Options.Seed);
+            var stopwatch = new System.Diagnostics.Stopwatch();
+
+            stopwatch.Start();
+            LoadRegulationFile();
+            ModifyWeapons();
+            ModifySpells();
+            ModifyReinforceParams();
+            RemoveEnemyItemLots();
+            RandomizeMapItemLots();
+            RandomizeShopItems();
+            RandomizeStartingClasses();
+            SaveRegulationFile();
+            stopwatch.Stop();
+
+            OnProgressChanged(1, $"Done. Took {stopwatch.ElapsedMilliseconds / 1000f:F2}s");
+        }
 
         private void UpdateProgress(int taskIndex, float taskProgress)
         {
@@ -136,6 +149,8 @@ namespace EldenRingItemRandomizer
                 UpdateProgress(taskIndex, i / (float)count);
                 ProcessWeapon(weapons[i]);
             }
+
+            Helper = new ItemRandomizerHelper(RandomNumberGenerator, GameData, RegulationParams, WeaponMaxUpgradeIdDict);
         }
 
         private void ModifySpells()
@@ -183,6 +198,7 @@ namespace EldenRingItemRandomizer
             UpdateProgress(taskIndex, 0);
             var mapItemLots = RegulationParams.ItemLotParam_map.ToArray();
             int count = mapItemLots.Count();
+            var addlParams = new ItemAdditionalParams(GoodWeaponTypes, new ProtectorCategory[] { });
             for (int i = 0; i < count; i++)
             {
                 UpdateProgress(taskIndex, i / (float)count);
@@ -196,7 +212,7 @@ namespace EldenRingItemRandomizer
                 var preserveItem = ProcessItemLot(itemLot);
                 if (!preserveItem)
                 {
-                    RandomizeOneItemLot(itemLot, AllWeights, GoodWeaponTypes, true);
+                    RandomizeOneItemLot(itemLot, AllWeights, addlParams, true);
                 }
             }
 
@@ -230,8 +246,8 @@ namespace EldenRingItemRandomizer
                 UpdateProgress(taskIndex, (classId - 3000) / 10.0f);
                 var startingClass = RegulationParams.CharaInitParam[classId];
 
-                startingClass.EquippedAccessorySlot1 = GetRandomItemOfType(ItemType.Talisman, false).Id;
-                startingClass.EquippedAccessorySlot2 = GetRandomItemOfType(ItemType.Talisman, false).Id;
+                startingClass.EquippedAccessorySlot1 = Helper.GetRandomItemOfType(ItemType.Talisman, null, false).Id;
+                startingClass.EquippedAccessorySlot2 = Helper.GetRandomItemOfType(ItemType.Talisman, null, false).Id;
 
                 startingClass.EquippedWeaponRightPrimary = -1;
                 startingClass.EquippedWeaponRightSecondary = -1;
@@ -255,41 +271,18 @@ namespace EldenRingItemRandomizer
                 startingClass.EquippedItemSlot1 = 2070;
                 startingClass.EquippedItemSlot1Amount = 1;
 
-                // Stonesword key
-                //startingClass.EquippedItemSlot2 = 8000;
-                //startingClass.EquippedItemSlot2Amount = 10;
+                // Remove spells
+                startingClass.EquippedSpellSlot1 = -1;
+                startingClass.EquippedSpellSlot2 = -1;
+                startingClass.EquippedSpellSlot3 = -1;
+                startingClass.EquippedSpellSlot4 = -1;
+                startingClass.EquippedSpellSlot5 = -1;
+                startingClass.EquippedSpellSlot6 = -1;
+                startingClass.EquippedSpellSlot7 = -1;
 
-                // Spirit ashes
-                // TODO - consider making this only give bad spirit ashes
-                //startingClass.EquippedItemSlot3 = GetRandomItemOfType(ItemType.SpiritAsh, false).Id;
-                //startingClass.EquippedItemSlot3Amount = 1;
-
-                //// Physick Tears
-                //startingClass.EquippedItemSlot4 = GetRandomItemOfType(ItemType.PhysickTear, false).Id;
-                //startingClass.EquippedItemSlot4Amount = 1;
-
-                //startingClass.EquippedItemSlot5 = GetRandomItemOfType(ItemType.PhysickTear, false).Id;
-                //startingClass.EquippedItemSlot5Amount = 1;
-
-                // Spirit calling bell
-                //startingClass.EquippedItemSlot6 = 8158;
-                //startingClass.EquippedItemSlot6Amount = 1;
-
-                //// Talisman pouches
-                //startingClass.EquippedItemSlot7 = 10040;
-                //startingClass.EquippedItemSlot7Amount = 3;
-
-                // Memory stones
-                //startingClass.EquippedItemSlot8 = 10030;
-                //startingClass.EquippedItemSlot8Amount = 9;
-
-                //// Flash of wondrous physick
-                //startingClass.StoredItemSlot3 = 251;
-                //startingClass.StoredItemSlot3Count = 1;
-
-                //// Spectral steed whistle
-                //startingClass.StoredItemSlot4 = 130;
-                //startingClass.StoredItemSlot4Count = 1;
+                // Talisman pouches
+                startingClass.EquippedItemSlot7 = 10040;
+                startingClass.EquippedItemSlot7Amount = 3;
 
                 startingClass.HPFlaskMaxPossessionLimit = 12;
                 startingClass.FPFlaskMaxPossessionLimit = 2;
@@ -319,42 +312,6 @@ namespace EldenRingItemRandomizer
                 WepType.Claw,
                 WepType.Whip,
                 WepType.ColossalWeapon
-            };
-
-            var moreStrBasedMeleeWeapons = new WepType[] {
-                WepType.StraightSword,
-                WepType.Greatsword,
-                WepType.ColossalSword,
-                WepType.Axe,
-                WepType.Greataxe,
-                WepType.Hammer,
-                WepType.GreatHammer,
-                WepType.Spear,
-                WepType.HeavySpear,
-                WepType.Halberd,
-                WepType.Scythe,
-                WepType.Fist,
-                WepType.ColossalWeapon
-            };
-
-            var moreDexBasedMeleeWeapons = new WepType[]
-            {
-                WepType.Dagger,
-                WepType.CurvedSword,
-                WepType.CurvedGreatsword,
-                WepType.Katana,
-                WepType.Twinblade,
-                WepType.ThrustingSword,
-                WepType.HeavyThrustingSword,
-                WepType.Flail,
-                WepType.Claw,
-                WepType.Whip
-            };
-
-            var shields = new WepType[] {
-                WepType.SmallShield,
-                WepType.MediumShield,
-                WepType.Greatshield
             };
 
             // Currently, all the same
@@ -387,27 +344,6 @@ namespace EldenRingItemRandomizer
             RegulationParams.Save(RegulationOutPath);
         }
 
-        public void Run()
-        {
-            ChosenItems = new Dictionary<ItemType, HashSet<int>>();
-            RandomNumberGenerator = new Random(Options.Seed);
-            var stopwatch = new System.Diagnostics.Stopwatch();
-
-            stopwatch.Start();
-            LoadRegulationFile();
-            ModifyWeapons();
-            ModifySpells();
-            ModifyReinforceParams();
-            RemoveEnemyItemLots();
-            RandomizeMapItemLots();
-            RandomizeShopItems();
-            RandomizeStartingClasses();
-            SaveRegulationFile();
-            stopwatch.Stop();
-
-            OnProgressChanged(1, $"Done. Took {stopwatch.ElapsedMilliseconds / 1000f:F2}s");
-        }
-
         private static void ProcessSpell(MagicParam spell)
         {
             if (spell.RowName?.Length > 0)
@@ -429,7 +365,7 @@ namespace EldenRingItemRandomizer
             row.ItemCategory1 = ItemlotItemcategory.Accessory;
         }
 
-        private void RandomizeItemGroups(IEnumerable<ItemLotGroup> groups, ItemTypeAndWeight[] weights, WepType[] wepTypes, bool withReplacement = false)
+        private void RandomizeItemGroups(IEnumerable<ItemLotGroup> groups, ItemTypeAndWeight[] weights, ItemAdditionalParams addlParams, bool withReplacement = false)
         {
             var shuffledGroups = groups.ToArray();
             Shuffle(shuffledGroups);
@@ -439,14 +375,14 @@ namespace EldenRingItemRandomizer
                 foreach (var itemLotId in group.ItemLotIds)
                 {
                     var itemLot = RegulationParams.ItemLotParam_map[itemLotId];
-                    RandomizeOneItemLot(itemLot, weights, wepTypes, withReplacement);
+                    RandomizeOneItemLot(itemLot, weights, addlParams, withReplacement);
                 }
             }
         }
 
-        private void RandomizeOneItemLot(ItemLotParam itemLot, ItemTypeAndWeight[] weights, WepType[] wepTypes, bool withReplacement = false)
+        private void RandomizeOneItemLot(ItemLotParam itemLot, ItemTypeAndWeight[] weights, ItemAdditionalParams addlParams, bool withReplacement = false)
         {
-            var item = GetRandomItemWeighted(weights, wepTypes, withReplacement);
+            var item = Helper.GetRandomItemWeighted(weights, addlParams, withReplacement);
             if (item != null)
             {
                 itemLot.ItemID1 = item.Id;
@@ -570,7 +506,7 @@ namespace EldenRingItemRandomizer
             bool clearRow = true;
             if (GameData.ShopLineupIds.Contains(shopLineup.Id))
             {
-                var item = GetRandomItemWeighted(ShopWeights, GoodWeaponTypes, false);
+                var item = Helper.GetRandomItemWeighted(ShopWeights, new ItemAdditionalParams(GoodWeaponTypes, new ProtectorCategory[] { }), false);
                 //Console.WriteLine($"{shopLineup.RowName}\n\tReplaced with {GetFriendlyItemName(item)}");
                 if (item != null)
                 {
@@ -617,175 +553,6 @@ namespace EldenRingItemRandomizer
             }
         }
 
-        public enum ItemType
-        {
-            SpiritAsh,
-            Talisman,
-            PhysickTear,
-            Sorcery,
-            Incantation,
-            Weapon,
-            AshOfWar,
-            Runes
-        }
-
-        private int ChooseRandomWeighted(float[] weights)
-        {
-            float totalWeight = weights.Sum();
-            float random = (float)RandomNumberGenerator.NextDouble() * totalWeight;
-            float prevWeight = 0;
-            float nextWeight;
-            for (int i = 0; i < weights.Length; i++)
-            {
-                nextWeight = prevWeight + weights[i];
-
-                if (random >= prevWeight && random <= nextWeight)
-                {
-                    return i;
-                }
-
-                prevWeight = nextWeight;
-            }
-
-            return -1;
-        }
-
-        public class ItemTypeAndWeight
-        {
-            public ItemType Type;
-            public float Weight;
-            public bool WithReplacement;
-
-            public ItemTypeAndWeight(ItemType type, float weight, bool withReplacement = false)
-            {
-                Type = type;
-                Weight = weight;
-                WithReplacement = withReplacement;
-            }
-        }
-
-        private ItemType? GetRandomItemTypeWeighted(IEnumerable<ItemTypeAndWeight> itemWeights, WepType[] wepTypes)
-        {
-            // Get array of item weights filtered by which item types still have items to be chosen
-            var filtered = itemWeights.Where(item => GetRandomItemOfType(item.Type, wepTypes, true) != null).ToArray();
-            var index = ChooseRandomWeighted(filtered.Select(item => item.Weight).ToArray());
-            if (index >= 0 && index < filtered.Length)
-            {
-                return filtered[index].Type;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        public class ItemDescription
-        {
-            public int Id;
-            public ItemlotItemcategory Category;
-            public ShopLineupEquiptype EquipType;
-
-            public ItemDescription(int id, ItemlotItemcategory category, ShopLineupEquiptype equipType)
-            {
-                Id = id;
-                Category = category;
-                EquipType = equipType;
-            }
-        }
-
-        // This is the API you want to use to get random items 99% of the time
-        private ItemDescription GetRandomItemWeighted(ItemTypeAndWeight[] itemWeights, WepType[] wepTypes, bool withReplacement)
-        {
-            var itemType = GetRandomItemTypeWeighted(itemWeights, wepTypes);
-            if (itemType != null)
-            {
-                return GetRandomItemOfType(itemType.Value, wepTypes, withReplacement || itemWeights.First(weight => weight.Type == itemType.Value).WithReplacement);
-            }
-
-            return null;
-        }
-
-        // This is the API you want to use to get random items 99% of the time
-        private ItemDescription GetRandomItemOfType(ItemType type, bool withReplacement)
-        {
-            return GetRandomItemOfType(type, new WepType[] { }, withReplacement);
-        }
-
-        // This is the API you want to use to get random items 99% of the time
-        private ItemDescription GetRandomItemOfType(ItemType type, WepType[] wepTypes, bool withReplacement)
-        {
-            ItemDescription output = null;
-            switch (type)
-            {
-                case ItemType.Weapon:
-                    output = new ItemDescription(GetRandomItemWithOrWithoutReplacement(GetPotentialWeaponIdsForTypes(wepTypes), ItemType.Weapon, withReplacement), ItemlotItemcategory.Weapon, ShopLineupEquiptype.Weapon);
-                    break;
-                case ItemType.Talisman:
-                    output = new ItemDescription(GetRandomItemWithOrWithoutReplacement(GameData.Talismans, ItemType.Talisman, withReplacement), ItemlotItemcategory.Accessory, ShopLineupEquiptype.Accessory);
-                    break;
-                case ItemType.SpiritAsh:
-                    output = new ItemDescription(GetRandomItemWithOrWithoutReplacement(GameData.SpiritAshIds, ItemType.SpiritAsh, withReplacement), ItemlotItemcategory.Good, ShopLineupEquiptype.Good);
-                    break;
-                case ItemType.Sorcery:
-                    output = new ItemDescription(GetRandomItemWithOrWithoutReplacement(GameData.SorceryIds, ItemType.Sorcery, withReplacement), ItemlotItemcategory.Good, ShopLineupEquiptype.Good);
-                    break;
-                case ItemType.Incantation:
-                    output = new ItemDescription(GetRandomItemWithOrWithoutReplacement(GameData.IncantationIds, ItemType.Incantation, withReplacement), ItemlotItemcategory.Good, ShopLineupEquiptype.Good);
-                    break;
-                case ItemType.PhysickTear:
-                    output = new ItemDescription(GetRandomItemWithOrWithoutReplacement(GameData.Tears, ItemType.PhysickTear, withReplacement), ItemlotItemcategory.Good, ShopLineupEquiptype.Good);
-                    break;
-                case ItemType.AshOfWar:
-                    output = new ItemDescription(GetRandomItemWithOrWithoutReplacement(GameData.AshOfWarIds, ItemType.AshOfWar, withReplacement), ItemlotItemcategory.Ash, ShopLineupEquiptype.Ashes);
-                    break;
-                case ItemType.Runes:
-                    output = new ItemDescription(GetRandomItemWithOrWithoutReplacement(GameData.GoodRuneIds, ItemType.Runes, withReplacement), ItemlotItemcategory.Good, ShopLineupEquiptype.Good);
-                    break;
-            }
-
-            if (output?.Id == -1)
-            {
-                return null;
-            }
-
-            return output;
-        }
-
-        // Return list of valid, fully upgraded weapons that match the specified types
-        private IEnumerable<int> GetPotentialWeaponIdsForTypes(WepType[] wepTypes)
-        {
-            var typesHashset = new HashSet<WepType>(wepTypes);
-            return RegulationParams.EquipParamWeapon.Where(weapon => weapon.RowName?.Length > 0 && typesHashset.Contains(weapon.WeaponType)).Select(weapon => WeaponMaxUpgradeIdDict[weapon]);
-        }
-
-        private int GetRandomItemWithOrWithoutReplacement(IEnumerable<int> potentialItemIds, ItemType type, bool withReplacement)
-        {
-            int[] actualItemIds = null;
-            // Even if you say with replacement, don't include items that have already been taken out
-            if (!ChosenItems.ContainsKey(type))
-            {
-                ChosenItems.Add(type, new HashSet<int>());
-            }
-
-            var chosenItemHashset = ChosenItems[type];
-            actualItemIds = potentialItemIds.Where(id => !chosenItemHashset.Contains(id)).ToArray();
-
-            if (actualItemIds.Length > 0)
-            {
-                var index = RandomNumberGenerator.Next(0, actualItemIds.Length);
-                var itemId = actualItemIds[index];
-
-                if (!withReplacement)
-                {
-                    ChosenItems[type].Add(itemId);
-                }
-
-                return itemId;
-            }
-
-            return -1;
-        }
-
         private void ModifyStartingGifts()
         {
             //Console.WriteLine($"Modifying starting gifts...");
@@ -811,13 +578,13 @@ namespace EldenRingItemRandomizer
                 {
                     types = new WepType[] { guaranteedRightHand };
                 }
-                var weaponId = GetRandomItemOfType(ItemType.Weapon, types, false).Id;
+                var weaponId = Helper.GetRandomItemOfType(ItemType.Weapon, new ItemAdditionalParams(types, new ProtectorCategory[] { }), false).Id;
                 startingClass[$"EquippedWeaponRight{slots[i]}"].Value = weaponId;
             }
 
             for (int i = 0; i < howManyLeft; i++)
             {
-                var weaponId = GetRandomItemOfType(ItemType.Weapon, leftHand, false).Id;
+                var weaponId = Helper.GetRandomItemOfType(ItemType.Weapon, new ItemAdditionalParams(leftHand, new ProtectorCategory[] { }), false).Id;
                 startingClass[$"EquippedWeaponLeft{slots[i]}"].Value = weaponId;
             }
 
@@ -825,7 +592,7 @@ namespace EldenRingItemRandomizer
             {
                 for (int i = 0; i < 4; i++)
                 {
-                    var spellId = GetRandomItemOfType(guaranteedRightHand == WepType.Staff ? ItemType.Sorcery : ItemType.Incantation, false).Id;
+                    var spellId = Helper.GetRandomItemOfType(guaranteedRightHand == WepType.Staff ? ItemType.Sorcery : ItemType.Incantation, null, false).Id;
                     startingClass[$"EquippedSpellSlot{i + 1}"].Value = spellId;
                 }
             }

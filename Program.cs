@@ -55,6 +55,11 @@ namespace EldenRingItemRandomizer
                 return;
             }
 
+            if (randomizerParams.Seed < 0)
+            {
+                randomizerParams.Seed = GenerateSeed();
+            }
+
             Console.WriteLine();
             Console.WriteLine("Running randomizer with the following params:");
             randomizerParams.PrettyPrint();
@@ -118,17 +123,10 @@ namespace EldenRingItemRandomizer
                         return null;
                     }
                 }
-
-                if (randomizerParams.Seed < 0)
-                {
-                    randomizerParams.Seed = GenerateSeed();
-                    Console.WriteLine("Provided seed was invalid, generating new seed");
-                }
             }
             else
             {
                 randomizerParams = new ItemRandomizerParams();
-                randomizerParams.Seed = GenerateSeed();
                 Console.WriteLine("Provided params were invalid, using default randomizer params");
             }
 
