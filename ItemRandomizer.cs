@@ -223,12 +223,6 @@ namespace EldenRingItemRandomizer
             {
                 UpdateProgress(i / (float)count);
                 var itemLot = mapItemLots[i];
-                if (itemLot.Id == 2000 || itemLot.Id == 2001)
-                {
-                    // Flasks
-                    continue;
-                }
-
                 var preserveItem = ProcessItemLot(itemLot);
                 if (!preserveItem)
                 {
@@ -476,15 +470,17 @@ namespace EldenRingItemRandomizer
             row.ItemAmount1 = 2;
         }
 
-        private bool IsKeyItemOrUniqueItem(int id)
+        private bool ShouldPreserveMapItemLot(int id)
         {
-            var row = RegulationParams.EquipParamGoods[id];
-            if (row != null)
+            return id switch
             {
-                return row.GoodsType == GoodsType.KeyItem || row.IsUniqueItem == EquipBool.True;
-            }
-
-            return false;
+                2000 => true, // Flask of Crimson Tears
+                2001 => true, // Flask of Cerulean Tears
+                10010000 => true, // Wizened Finger
+                1046360500 => true, // Dectus Medallion (left)
+                1051390900 => true, // Dectus Medallion (right)
+                _ => false
+            };
         }
 
         private void AddItemsToTwinMaidenHusks()
@@ -667,7 +663,7 @@ namespace EldenRingItemRandomizer
                 var category = (ItemlotItemcategory)categoryCell.Value;
 
                 // Key item, unique item, or serpent-hunter
-                if ((category == ItemlotItemcategory.Good && IsKeyItemOrUniqueItem(itemId)) || (category == ItemlotItemcategory.Weapon && itemId == 17030000))
+                if ((category == ItemlotItemcategory.Good && ShouldPreserveMapItemLot(itemId)) || (category == ItemlotItemcategory.Weapon && itemId == 17030000))
                 {
                     preserve = true;
                     continue;

@@ -1,5 +1,6 @@
 ﻿//#define GenerateCode
 
+using MemoryReaderWriter;
 using SoulsFormats;
 using StronglyTypedParams;
 using System;
@@ -16,6 +17,22 @@ namespace EldenRingItemRandomizer
         {
             Console.WriteLine($"Elden Ring Item Randomizer v{Version}");
             Console.WriteLine();
+
+            var manager = ProcessMemoryManager.FromProcessName("eldenring");
+            if (manager != null && manager.IsAttached)
+            {
+                Console.WriteLine("Attached to elden ring process");
+                int baseAddress = 0xCC4A06 + manager.ReadInt32(new MemoryAddress(0xCC4A06 + 3)) + 7;
+                Console.WriteLine($"Base Address: {baseAddress:X}");
+                var address = MemoryAddress.FromCheatEngineAddress(baseAddress, 0xA58, 0x28);
+                Console.WriteLine($"Actual Address: {manager.ResolveMemoryAddress(address):X}");
+                var tableOfLostGrace = manager.ReadBit(address, 1);
+                Console.WriteLine($"Table of Lost Grace enabled? {tableOfLostGrace}");
+            }
+
+            Console.Write("Press any key to close...");
+            Console.ReadLine();
+            return;
 
             Preferences preferences = JSON.ParseFile<Preferences>("preferences.json");
 
