@@ -4,6 +4,8 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <LangVersion>latest</LangVersion>
+    <PlatformTarget>x64</PlatformTarget>
+    <StartupObject>EldenRingItemRandomizer.Program</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MemoryReaderWriter\MemoryReaderWriter.csproj" />
+    <ProjectReference Include="..\PropertyHook\PropertyHook\PropertyHook.csproj" />
     <ProjectReference Include="..\StronglyTypedParams\StronglyTypedParams.csproj" />
   </ItemGroup>
 

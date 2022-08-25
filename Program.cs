@@ -5,7 +5,9 @@ using SoulsFormats;
 using StronglyTypedParams;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Threading;
 
 namespace EldenRingItemRandomizer
 {
@@ -18,17 +20,31 @@ namespace EldenRingItemRandomizer
             Console.WriteLine($"Elden Ring Item Randomizer v{Version}");
             Console.WriteLine();
 
-            var manager = ProcessMemoryManager.FromProcessName("eldenring");
-            if (manager != null && manager.IsAttached)
+            var processes = Process.GetProcesses();
+            while (true)
             {
-                Console.WriteLine("Attached to elden ring process");
-                int baseAddress = 0xCC4A06 + manager.ReadInt32(new MemoryAddress(0xCC4A06 + 3)) + 7;
-                Console.WriteLine($"Base Address: {baseAddress:X}");
-                var address = MemoryAddress.FromCheatEngineAddress(baseAddress, 0xA58, 0x28);
-                Console.WriteLine($"Actual Address: {manager.ResolveMemoryAddress(address):X}");
-                var tableOfLostGrace = manager.ReadBit(address, 1);
-                Console.WriteLine($"Table of Lost Grace enabled? {tableOfLostGrace}");
+                var sample = new SampleHook();
+                sample.Start();
+
+                Console.WriteLine();
+                Console.WriteLine(DateTime.Now);
+                Console.WriteLine($"Attached = {sample.Hooked}");
+                Console.WriteLine($"64Bit = {sample.Is64Bit}");
+                Console.WriteLine($"EventFlagMan = {sample.EventFlagMan.Resolve():X}");
+                Thread.Sleep(2500);
             }
+
+            //var manager = ProcessMemoryManager.FromProcessName("eldenring");
+            //if (manager != null && manager.IsAttached)
+            //{
+            //    Console.WriteLine("Attached to elden ring process");
+            //    int baseAddress = 0xCC4A06 + manager.ReadInt32(new MemoryAddress(0xCC4A06 + 3)) + 7;
+            //    Console.WriteLine($"Base Address: {baseAddress:X}");
+            //    var address = MemoryAddress.FromCheatEngineAddress(baseAddress, 0xA58, 0x28);
+            //    Console.WriteLine($"Actual Address: {manager.ResolveMemoryAddress(address):X}");
+            //    var tableOfLostGrace = manager.ReadBit(address, 1);
+            //    Console.WriteLine($"Table of Lost Grace enabled? {tableOfLostGrace}");
+            //}
 
             Console.Write("Press any key to close...");
             Console.ReadLine();
