@@ -35,6 +35,9 @@ namespace EldenRingItemRandomizer
         public ItemLotGroup[] MapPlinths { get; }
         public int[] GoodRuneIds { get; }
         public int[] ShopLineupIds { get; }
+        public int[] MapFragmentFlags { get; }
+        public int[] MapPointFlags { get; private set; }
+        public int[] WhetbladeFlagIds { get; }
 
         public GameData(RegulationParams regulationParams)
         {
@@ -716,6 +719,20 @@ namespace EldenRingItemRandomizer
             IncantationIds = RegulationParams.EquipParamGoods.Where(row => (row.RowName ?? "").StartsWith("[Incantation]")).Select(row => row.Id).ToArray();
             
             TeardropScarabs = RegulationParams.ItemLotParam_map.Where(row => (row.RowName ?? "").StartsWith("[Teardrop Scarab")).Select(row => new ItemLotGroup(row.Id)).ToArray();
+
+            MapFragmentFlags = RegulationParams.WorldMapPieceParam.Select(row => (int)row.OpenEventFlagID).ToArray();
+
+            MapPointFlags = RegulationParams.WorldMapPointParam.Select(row => (int)row.OpenEventFlagID).ToArray();
+
+            WhetbladeFlagIds = new int[]
+            {
+                400210,
+                65610,
+                65660,
+                65720,
+                65680,
+                65640,
+            };
         }
     }
 }

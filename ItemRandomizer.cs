@@ -223,9 +223,11 @@ namespace EldenRingItemRandomizer
             {
                 UpdateProgress(i / (float)count);
                 var itemLot = mapItemLots[i];
-                var preserveItem = ProcessItemLot(itemLot);
-                if (!preserveItem)
+
+                if (!ShouldPreserveMapItemLot(itemLot))
                 {
+                    // Remove all items in this lot, and replace with random stuff
+                    ProcessItemLot(itemLot);
                     RandomizeOneItemLot(itemLot, AllWeights, addlParams, true);
                 }
             }
@@ -470,15 +472,21 @@ namespace EldenRingItemRandomizer
             row.ItemAmount1 = 2;
         }
 
-        private bool ShouldPreserveMapItemLot(int id)
+        private bool ShouldPreserveMapItemLot(ItemLotParam mapLot)
         {
-            return id switch
+            if (mapLot.RowName?.Length > 0 && mapLot.RowName.StartsWith("[Material]"))
+            {
+                return true; // Preserve crafting materials
+            }
+
+            return mapLot.Id switch
             {
                 2000 => true, // Flask of Crimson Tears
                 2001 => true, // Flask of Cerulean Tears
                 10010000 => true, // Wizened Finger
                 1046360500 => true, // Dectus Medallion (left)
                 1051390900 => true, // Dectus Medallion (right)
+                16000690 => true, // Serpent-Hunter
                 _ => false
             };
         }
@@ -649,9 +657,8 @@ namespace EldenRingItemRandomizer
         }
 
         // Set all weapons in the item lot to be their max upgraded equivalents
-        bool ProcessItemLot(ItemLotParam itemLot)
+        void ProcessItemLot(ItemLotParam itemLot)
         {
-            bool preserve = false;
             for (int i = 1; i <= 8; i++)
             {
                 var itemIdCell = itemLot[$"ItemID{i}"];
@@ -659,23 +666,11 @@ namespace EldenRingItemRandomizer
                 var amountCell = itemLot[$"ItemAmount{i}"];
                 var itemChanceCell = itemLot[$"ItemChance{i}"];
 
-                var itemId = (int)itemIdCell.Value;
-                var category = (ItemlotItemcategory)categoryCell.Value;
-
-                // Key item, unique item, or serpent-hunter
-                if ((category == ItemlotItemcategory.Good && ShouldPreserveMapItemLot(itemId)) || (category == ItemlotItemcategory.Weapon && itemId == 17030000))
-                {
-                    preserve = true;
-                    continue;
-                }
-
                 itemIdCell.Value = 0;
                 itemChanceCell.Value = 0;
                 amountCell.Value = 0;
                 categoryCell.Value = ItemlotItemcategory.None;
             }
-
-            return preserve;
         }
     }
 }

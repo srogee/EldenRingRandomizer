@@ -2,19 +2,30 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
-    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier></RuntimeIdentifier>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <StartupObject>EldenRingItemRandomizer.Program</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="GameState\Assembly\IsEventFlag.asm" />
+    <None Remove="GameState\Assembly\SetEventFlag.asm" />
+    <None Remove="GameState\Assembly\Warp.asm" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="GameState\Assembly\IsEventFlag.asm" />
+    <EmbeddedResource Include="GameState\Assembly\Warp.asm" />
+    <EmbeddedResource Include="GameState\Assembly\SetEventFlag.asm" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="keystoneengine.csharp" Version="0.9.1.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MemoryReaderWriter\MemoryReaderWriter.csproj" />
-    <ProjectReference Include="..\PropertyHook\PropertyHook\PropertyHook.csproj" />
+    <ProjectReference Include="..\PropertyHook\PropertyHook.csproj" />
     <ProjectReference Include="..\StronglyTypedParams\StronglyTypedParams.csproj" />
   </ItemGroup>
 

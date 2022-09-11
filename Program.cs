@@ -1,6 +1,6 @@
 ﻿//#define GenerateCode
 
-using MemoryReaderWriter;
+using EldenRingItemRandomizer.GameState;
 using SoulsFormats;
 using StronglyTypedParams;
 using System;
@@ -13,42 +13,15 @@ namespace EldenRingItemRandomizer
 {
     partial class Program
     {
-        public static string Version = "1.1";
+        public static string Version = "1.3";
 
         static void Main(string[] args)
         {
+#if GenerateCode
+            ParamClassGenerator.Generate();
+#else
             Console.WriteLine($"Elden Ring Item Randomizer v{Version}");
             Console.WriteLine();
-
-            var processes = Process.GetProcesses();
-            while (true)
-            {
-                var sample = new SampleHook();
-                sample.Start();
-
-                Console.WriteLine();
-                Console.WriteLine(DateTime.Now);
-                Console.WriteLine($"Attached = {sample.Hooked}");
-                Console.WriteLine($"64Bit = {sample.Is64Bit}");
-                Console.WriteLine($"EventFlagMan = {sample.EventFlagMan.Resolve():X}");
-                Thread.Sleep(2500);
-            }
-
-            //var manager = ProcessMemoryManager.FromProcessName("eldenring");
-            //if (manager != null && manager.IsAttached)
-            //{
-            //    Console.WriteLine("Attached to elden ring process");
-            //    int baseAddress = 0xCC4A06 + manager.ReadInt32(new MemoryAddress(0xCC4A06 + 3)) + 7;
-            //    Console.WriteLine($"Base Address: {baseAddress:X}");
-            //    var address = MemoryAddress.FromCheatEngineAddress(baseAddress, 0xA58, 0x28);
-            //    Console.WriteLine($"Actual Address: {manager.ResolveMemoryAddress(address):X}");
-            //    var tableOfLostGrace = manager.ReadBit(address, 1);
-            //    Console.WriteLine($"Table of Lost Grace enabled? {tableOfLostGrace}");
-            //}
-
-            Console.Write("Press any key to close...");
-            Console.ReadLine();
-            return;
 
             Preferences preferences = JSON.ParseFile<Preferences>("preferences.json");
 
@@ -70,49 +43,59 @@ namespace EldenRingItemRandomizer
             Console.WriteLine("Found regulation.bin.bak file in game install directory");
             Console.WriteLine();
 
-#if GenerateCode
-            ParamClassGenerator.Generate();
-#else
+            var mainOption = ConsolePrompt.Option("What do you want to do", new string[] { "Randomize regulation file", "Attach to Elden Ring process" });
 
-            var option = ConsolePrompt.Option("How do you want to input params", new string[] { "Use defaults", "Enter shareable JSON", "Enter manually" });
-            ItemRandomizerParams randomizerParams = option switch
+            if (mainOption == 0)
             {
-                0 => new ItemRandomizerParams(),
-                1 => GetShareableJSONParams(),
-                2 => GetManuallyEnteredParams(),
-                _ => null
-            };
+                var option = ConsolePrompt.Option("How do you want to input params", new string[] { "Use defaults", "Enter shareable JSON", "Enter manually" });
+                ItemRandomizerParams randomizerParams = option switch
+                {
+                    0 => new ItemRandomizerParams(),
+                    1 => GetShareableJSONParams(),
+                    2 => GetManuallyEnteredParams(),
+                    _ => null
+                };
 
-            if (randomizerParams == null)
-            {
-                return;
+                if (randomizerParams == null)
+                {
+                    return;
+                }
+
+                if (randomizerParams.Seed < 0)
+                {
+                    randomizerParams.Seed = GenerateSeed();
+                }
+
+                Console.WriteLine();
+                Console.WriteLine("Running randomizer with the following params:");
+                randomizerParams.PrettyPrint();
+
+                var shareableParamsJson = JSON.Stringify(randomizerParams);
+
+                var randomizer = new ItemRandomizer(randomizerParams, regulationInPath, regulationOutPath);
+                randomizer.OnProgressChanged += DrawProgressBar;
+
+                Console.WriteLine();
+                randomizer.Run();
+                Console.WriteLine();
+
+                Console.WriteLine();
+                Console.WriteLine("Share this JSON string with others:");
+                Console.WriteLine(shareableParamsJson);
+
+                Console.WriteLine();
+                var runtime = new ItemRandomizerRuntime(regulationInPath);
+                runtime.Run();
             }
-
-            if (randomizerParams.Seed < 0)
+            else if (mainOption == 1)
             {
-                randomizerParams.Seed = GenerateSeed();
+                var runtime = new ItemRandomizerRuntime(regulationInPath);
+                runtime.Run();
+
+                Console.WriteLine();
+                Console.Write("Press any key to close...");
+                Console.ReadLine();
             }
-
-            Console.WriteLine();
-            Console.WriteLine("Running randomizer with the following params:");
-            randomizerParams.PrettyPrint();
-
-            var shareableParamsJson = JSON.Stringify(randomizerParams);
-            
-            var randomizer = new ItemRandomizer(randomizerParams, regulationInPath, regulationOutPath);
-            randomizer.OnProgressChanged += DrawProgressBar;
-            
-            Console.WriteLine();
-            randomizer.Run();
-            Console.WriteLine();
-
-            Console.WriteLine();
-            Console.WriteLine("Share this JSON string with others:");
-            Console.WriteLine(shareableParamsJson);
-
-            Console.WriteLine();
-            Console.Write("Press any key to close...");
-            Console.ReadLine();
 #endif
         }
 
