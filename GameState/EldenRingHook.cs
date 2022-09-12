@@ -80,6 +80,34 @@ namespace EldenRingItemRandomizer.GameState
         {
         }
 
+        public void GiveItem(ItemSpawnInfo item)
+        {
+            byte[] itemInfobytes = new byte[(int)Offsets.ItemGiveStruct.ItemStructHeaderSize + (int)Offsets.ItemGiveStruct.ItemStructEntrySize];
+            IntPtr itemInfo = GetPrefferedIntPtr(itemInfobytes.Length);
+
+            byte[] bytes = BitConverter.GetBytes(0x1);
+            Array.Copy(bytes, 0x0, itemInfobytes, (int)Offsets.ItemGiveStruct.Count, bytes.Length);
+
+            bytes = BitConverter.GetBytes(item.ID + item.Infusion + item.Upgrade + (int)item.Category);
+            Array.Copy(bytes, 0x0, itemInfobytes, (int)Offsets.ItemGiveStruct.ID, bytes.Length);
+
+            bytes = BitConverter.GetBytes(item.Quantity);
+            Array.Copy(bytes, 0x0, itemInfobytes, (int)Offsets.ItemGiveStruct.Quantity, bytes.Length);
+
+            bytes = BitConverter.GetBytes(item.Gem);
+            Array.Copy(bytes, 0x0, itemInfobytes, (int)Offsets.ItemGiveStruct.Gem, bytes.Length);
+
+            Kernel32.WriteBytes(Handle, itemInfo, itemInfobytes);
+
+            string asmString = Util.GetEmbededResource("Assembly.ItemGib.asm");
+            string asm = string.Format(asmString, itemInfo.ToString("X2"), MapItemMan.Resolve(), ItemGive.Resolve() + Offsets.ItemGiveOffset);
+            AsmExecute(asm);
+            Free(itemInfo);
+
+            if (item.EventID != -1)
+                SetEventFlag(item.EventID, true);
+        }
+
         public bool GetEventFlag(int flag)
         {
             IntPtr returnPtr = GetPrefferedIntPtr(sizeof(bool));

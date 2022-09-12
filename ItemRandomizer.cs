@@ -487,6 +487,9 @@ namespace EldenRingItemRandomizer
                 1046360500 => true, // Dectus Medallion (left)
                 1051390900 => true, // Dectus Medallion (right)
                 16000690 => true, // Serpent-Hunter
+                14000930 => true, // Academy Glintstone Key
+                1034450100 => true, // Academy Glintstone Key
+                100010 => true, // Rold Medallion
                 _ => false
             };
         }

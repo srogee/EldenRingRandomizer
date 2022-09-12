@@ -25,25 +25,43 @@ namespace EldenRingItemRandomizer
 
             Preferences preferences = JSON.ParseFile<Preferences>("preferences.json");
 
-            if (!Directory.Exists(preferences.GameInstallDirectory))
+            if (string.IsNullOrWhiteSpace(preferences.GameInstallDirectory) || !Directory.Exists(preferences.GameInstallDirectory))
             {
                 Console.WriteLine("Game install directory is not set or does not exist. Set it in preferences.json.");
+                Console.WriteLine();
+                Console.Write("Press any key to close...");
+                Console.ReadLine();
                 return;
             }
 
+            if (string.IsNullOrWhiteSpace(preferences.YappedDirectory) || !Directory.Exists(preferences.YappedDirectory))
+            {
+                Console.WriteLine("Yapped directory is not set or does not exist. Set it in preferences.json.");
+                Console.WriteLine();
+                Console.Write("Press any key to close...");
+                Console.ReadLine();
+                return;
+            }
+
+            ParamClassGenerator.YappedPath = preferences.YappedDirectory;
+
             string regulationInPath = Path.Combine(preferences.GameInstallDirectory, "regulation.bin.bak");
             string regulationOutPath = Path.Combine(preferences.GameInstallDirectory, "regulation.bin");
+            string exePath = Path.Combine(preferences.GameInstallDirectory, "launch_elden_ring_seamlesscoop.exe");
 
             if (!File.Exists(regulationInPath))
             {
                 Console.WriteLine("regulation.bin.bak file not found in game install directory. Copy the vanilla regulation.bin and rename it to regulation.bin.bak.");
+                Console.WriteLine();
+                Console.Write("Press any key to close...");
+                Console.ReadLine();
                 return;
             }
 
             Console.WriteLine("Found regulation.bin.bak file in game install directory");
             Console.WriteLine();
 
-            var mainOption = ConsolePrompt.Option("What do you want to do", new string[] { "Randomize regulation file", "Attach to Elden Ring process" });
+            var mainOption = ConsolePrompt.Option("What do you want to do", new string[] { "Randomize game files", "Run Elden Ring" });
 
             if (mainOption == 0)
             {
@@ -58,6 +76,9 @@ namespace EldenRingItemRandomizer
 
                 if (randomizerParams == null)
                 {
+                    Console.WriteLine();
+                    Console.Write("Press any key to close...");
+                    Console.ReadLine();
                     return;
                 }
 
@@ -84,12 +105,20 @@ namespace EldenRingItemRandomizer
                 Console.WriteLine(shareableParamsJson);
 
                 Console.WriteLine();
-                var runtime = new ItemRandomizerRuntime(regulationInPath);
+                var runtime = new ItemRandomizerRuntime(regulationInPath, exePath);
+                runtime.OnProgressChanged += DrawProgressBar;
+                Console.WriteLine();
                 runtime.Run();
+
+                Console.WriteLine();
+                Console.Write("Press any key to close...");
+                Console.ReadLine();
             }
             else if (mainOption == 1)
             {
-                var runtime = new ItemRandomizerRuntime(regulationInPath);
+                var runtime = new ItemRandomizerRuntime(regulationInPath, exePath);
+                runtime.OnProgressChanged += DrawProgressBar;
+                Console.WriteLine();
                 runtime.Run();
 
                 Console.WriteLine();

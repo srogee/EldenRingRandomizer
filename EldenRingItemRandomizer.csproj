@@ -9,11 +9,13 @@
 
   <ItemGroup>
     <None Remove="GameState\Assembly\IsEventFlag.asm" />
+    <None Remove="GameState\Assembly\ItemGib.asm" />
     <None Remove="GameState\Assembly\SetEventFlag.asm" />
     <None Remove="GameState\Assembly\Warp.asm" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="GameState\Assembly\ItemGib.asm" />
     <EmbeddedResource Include="GameState\Assembly\IsEventFlag.asm" />
     <EmbeddedResource Include="GameState\Assembly\Warp.asm" />
     <EmbeddedResource Include="GameState\Assembly\SetEventFlag.asm" />

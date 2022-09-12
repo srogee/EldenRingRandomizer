@@ -9,6 +9,7 @@ namespace EldenRingItemRandomizer
     internal class Preferences
     {
         public string GameInstallDirectory;
+        public string YappedDirectory;
 
         public Preferences() { }
     }
