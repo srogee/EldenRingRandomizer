@@ -29,7 +29,7 @@ namespace EldenRingItemRandomizer
             return -1;
         }
 
-        public static void Shuffle<T>(Random randomNumberGenerator, T[] array)
+        public static void Shuffle<T>(Random randomNumberGenerator, ref T[] array)
         {
             int n = array.Length;
             for (int i = 0; i < (n - 1); i++)

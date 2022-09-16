@@ -81,5 +81,16 @@ namespace EldenRingItemRandomizer
         {
             return JsonConvert.SerializeObject(objectToSerialize);
         }
+
+        /// <summary>
+        /// Converts an object to JSON serialized data.
+        /// </summary>
+        /// <typeparam name="T">Class</typeparam>
+        /// <param name="objectToSerialize">Object reference</param>
+        /// <returns>Serialized JSON</returns>
+        public static void SaveToFile<T>(string filename, T objectToSerialize) where T : class
+        {
+            File.WriteAllText(filename, Stringify(objectToSerialize), System.Text.Encoding.UTF8);
+        }
     }
 }

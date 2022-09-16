@@ -13,7 +13,7 @@ namespace EldenRingItemRandomizer
 {
     partial class Program
     {
-        public static string Version = "1.3";
+        public static string Version = "1.4";
 
         static void Main(string[] args)
         {
@@ -104,6 +104,10 @@ namespace EldenRingItemRandomizer
                 Console.WriteLine("Share this JSON string with others:");
                 Console.WriteLine(shareableParamsJson);
 
+                Console.WriteLine(string.Join("\n", randomizer.SpoilerLog));
+
+                // TODO remove
+                return;
                 Console.WriteLine();
                 var runtime = new ItemRandomizerRuntime(regulationInPath, exePath);
                 runtime.OnProgressChanged += DrawProgressBar;

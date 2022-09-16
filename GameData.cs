@@ -38,6 +38,8 @@ namespace EldenRingItemRandomizer
         public int[] MapFragmentFlags { get; }
         public int[] MapPointFlags { get; private set; }
         public int[] WhetbladeFlagIds { get; }
+        public BossDefinition[] MajorBosses2 { get; }
+        public ItemAndEventId[] GreatRunes { get; }
 
         public GameData(RegulationParams regulationParams)
         {
@@ -732,6 +734,39 @@ namespace EldenRingItemRandomizer
                 65720,
                 65680,
                 65640,
+            };
+
+            MajorBosses2 = new BossDefinition[]
+            {
+                new BossDefinition("Margit", 10000),
+                new BossDefinition("Godrick", 10010, 10011),
+                new BossDefinition("Morgott", 10040, 10041),
+                new BossDefinition("Mohg", 10120, 10121, 10250),
+                //new BossDefinition("Godfrey", 101100), // TODO: Unsure
+                new BossDefinition("Godfrey / Hoarah Loux", 10070),
+                new BossDefinition("Gideon", 10060, 10061, 10062, 10063, 10064),
+                new BossDefinition("Godskin Duo", 10140, 10141),
+                new BossDefinition("Red Wolf of Radagon", 10170),
+                new BossDefinition("Rennala", 10180, 10181, 10182),
+                new BossDefinition("Loretta", 10190, 10191),
+                new BossDefinition("Malenia", 10200, 10201),
+                new BossDefinition("Godskin Noble", 10210, 10211),
+                new BossDefinition("Maliketh", 10160),
+                new BossDefinition("Rykard", 10220, 10221),
+                new BossDefinition("Elden Beast", 10230),
+                new BossDefinition("Radahn", 10300, 10301),
+                new BossDefinition("Fire Giant", 10310),
+            };
+
+            GreatRunes = new ItemAndEventId[]
+            {
+                new ItemAndEventId("Godrick's Great Rune", 8148, ItemlotItemcategory.Good, 171),
+                new ItemAndEventId("Morgott's Great Rune", 8150, ItemlotItemcategory.Good, 173),
+                new ItemAndEventId("Mohg's Great Rune", 8152, ItemlotItemcategory.Good, 175),
+                new ItemAndEventId("Great Rune of the Unborn", 10080, ItemlotItemcategory.Good, 197),
+                new ItemAndEventId("Malenia's Great Rune", 8153, ItemlotItemcategory.Good, 176),
+                new ItemAndEventId("Rykard's Great Rune", 8151, ItemlotItemcategory.Good, 174),
+                new ItemAndEventId("Radahn's Great Rune", 8149, ItemlotItemcategory.Good, 172),
             };
         }
     }

@@ -23,6 +23,7 @@ namespace EldenRingItemRandomizer
         public ProgressChangedEvent OnProgressChanged;
         private string ExePath;
         private bool HookedRaised = false;
+        private RandomizerGameState RandomizedGameState;
 
         private static TaskDefinition[] Tasks = new TaskDefinition[] {
             new TaskDefinition("Waiting for Elden Ring to start"),
@@ -41,6 +42,7 @@ namespace EldenRingItemRandomizer
             ExePath = exePath;
             Hook = new EldenRingHook(1000, 1000, p => p.MainWindowTitle is "ELDEN RING™" or "ELDEN RING");
             RegulationPath = regulationPath;
+            RandomizedGameState = JSON.ParseFile<RandomizerGameState>("state.json");
         }
 
         public void Run()

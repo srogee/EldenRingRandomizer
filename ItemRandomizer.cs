@@ -28,12 +28,14 @@ namespace EldenRingItemRandomizer
         private ItemRandomizerHelper Helper;
         private string RegulationInPath;
         private string RegulationOutPath;
+        public List<string> SpoilerLog;
 
         public ItemRandomizer(ItemRandomizerParams options, string regulationInPath, string regulationOutPath)
         {
             Options = options;
             RegulationInPath = regulationInPath;
             RegulationOutPath = regulationOutPath;
+            SpoilerLog = new List<string>();
         }
 
         private static TaskDefinition[] Tasks = new TaskDefinition[] {
@@ -42,6 +44,7 @@ namespace EldenRingItemRandomizer
             new TaskDefinition("Modifying armor"),
             new TaskDefinition("Modifying spells"),
             new TaskDefinition("Modifying reinforce params"),
+            new TaskDefinition("Generating game state"),
             new TaskDefinition("Removing enemy items"),
             new TaskDefinition("Randomizing map items"),
             new TaskDefinition("Randomizing shop items"),
@@ -64,6 +67,7 @@ namespace EldenRingItemRandomizer
             ModifyArmor();
             ModifySpells();
             ModifyReinforceParams();
+            GenerateGameState();
             RemoveEnemyItemLots();
             RandomizeMapItemLots();
             RandomizeShopItems();
@@ -136,6 +140,7 @@ namespace EldenRingItemRandomizer
             new ItemTypeAndWeight(ItemType.AshOfWar, 0.25f),
             new ItemTypeAndWeight(ItemType.Runes, 0.25f),
         };
+        private RandomizerGameState RandomizedGameState;
 
         private void LoadRegulationFile()
         {
@@ -199,6 +204,30 @@ namespace EldenRingItemRandomizer
             }
         }
 
+        private void GenerateGameState()
+        {
+            CurrentTaskIndex++;
+            UpdateProgress(0);
+
+            var allBossIndices = GameData.MajorBosses2.Select((_, index) => index).ToArray();
+            RandomUtils.Shuffle(RandomNumberGenerator, ref allBossIndices);
+
+            var allGreatRuneIndices = GameData.GreatRunes.Select((_, index) => index).ToArray();
+            RandomUtils.Shuffle(RandomNumberGenerator, ref allGreatRuneIndices);
+
+            var bossIndices = allBossIndices.Take(Options.GreatRunesRequired).ToArray();
+            var greatRuneIndices = allGreatRuneIndices.Take(Options.GreatRunesRequired).ToArray();
+            var pairs = bossIndices.Select((bossIndex, bossArrayIndex) => new Tuple<int, int>(bossIndex, greatRuneIndices[bossArrayIndex])).ToArray();
+
+            RandomizedGameState = new RandomizerGameState()
+            {
+                BossDefinitionGreatRunePairs = pairs
+            };
+
+            // Save it for later
+            JSON.SaveToFile("state.json", RandomizedGameState);
+        }
+
         private void RemoveEnemyItemLots()
         {
             CurrentTaskIndex++;
@@ -228,7 +257,7 @@ namespace EldenRingItemRandomizer
                 {
                     // Remove all items in this lot, and replace with random stuff
                     ProcessItemLot(itemLot);
-                    RandomizeOneItemLot(itemLot, AllWeights, addlParams, true);
+                    ReplaceMapItemLot(itemLot, addlParams);
                 }
             }
 
@@ -240,7 +269,7 @@ namespace EldenRingItemRandomizer
             CurrentTaskIndex++;
             UpdateProgress(0);
             var shuffledShopLineup = RegulationParams.ShopLineupParam.ToArray();
-            RandomUtils.Shuffle(RandomNumberGenerator, shuffledShopLineup);
+            RandomUtils.Shuffle(RandomNumberGenerator, ref shuffledShopLineup);
             int count = shuffledShopLineup.Count();
             for (int i = 0; i < count; i++)
             {
@@ -374,32 +403,6 @@ namespace EldenRingItemRandomizer
             }
         }
 
-        private void AddNiceStartingItems()
-        {
-            var row = RegulationParams.ItemLotParam_map[18000080];
-            row.ItemID1 = 1200; // Gold pickled fowl foot
-            row.ItemCategory1 = ItemlotItemcategory.Good;
-
-            row = RegulationParams.ItemLotParam_map[18000081];
-            row.ItemID1 = 1110; // Gold scarab talisman
-            row.ItemCategory1 = ItemlotItemcategory.Accessory;
-        }
-
-        private void RandomizeItemGroups(IEnumerable<ItemLotGroup> groups, ItemTypeAndWeight[] weights, ItemAdditionalParams addlParams, bool withReplacement = false)
-        {
-            var shuffledGroups = groups.ToArray();
-            RandomUtils.Shuffle(RandomNumberGenerator, shuffledGroups);
-
-            foreach (var group in shuffledGroups)
-            {
-                foreach (var itemLotId in group.ItemLotIds)
-                {
-                    var itemLot = RegulationParams.ItemLotParam_map[itemLotId];
-                    RandomizeOneItemLot(itemLot, weights, addlParams, withReplacement);
-                }
-            }
-        }
-
         private void RandomizeOneItemLot(ItemLotParam itemLot, ItemTypeAndWeight[] weights, ItemAdditionalParams addlParams, bool withReplacement = false)
         {
             var item = Helper.GetRandomItemWeighted(weights, addlParams, withReplacement);
@@ -412,52 +415,6 @@ namespace EldenRingItemRandomizer
             }
 
             //Console.WriteLine($"{itemLot.RowName}\n\tReplaced with {GetFriendlyItemName(item)}");
-        }
-
-        private string GetFriendlyItemName(ItemDescription desc)
-        {
-            if (desc == null)
-            {
-                return "nothing";
-            }
-
-            var name = GetRowFromItemDescription(desc, out int weaponUpgradeLevel).RowName;
-            if (desc.Category == ItemlotItemcategory.Weapon)
-            {
-                name += $" +{weaponUpgradeLevel}";
-            }
-
-            return name;
-        }
-
-        private ParamRow GetRowFromItemDescription(ItemDescription desc, out int weaponUpgradeLevel)
-        {
-            weaponUpgradeLevel = 0;
-
-            switch (desc.Category)
-            {
-                case ItemlotItemcategory.Accessory:
-                    return RegulationParams.EquipParamAccessory[desc.Id];
-                case ItemlotItemcategory.Good:
-                    return RegulationParams.EquipParamGoods[desc.Id];
-                case ItemlotItemcategory.Ash:
-                    return RegulationParams.EquipParamGem[desc.Id];
-                case ItemlotItemcategory.Protector:
-                    return RegulationParams.EquipParamProtector[desc.Id];
-                case ItemlotItemcategory.Weapon:
-                    var id = desc.Id;
-                    if (id.ToString().EndsWith("25"))
-                    {
-                        weaponUpgradeLevel = 25;
-                    }
-                    else if (id.ToString().EndsWith("10"))
-                    {
-                        weaponUpgradeLevel = 10;
-                    }
-                    return RegulationParams.EquipParamWeapon[desc.Id - weaponUpgradeLevel];
-            }
-
-            return null;
         }
 
         private void GivePlayerMaxFlasks()
@@ -494,8 +451,30 @@ namespace EldenRingItemRandomizer
             };
         }
 
+        private void ReplaceMapItemLot(ItemLotParam itemLot, ItemAdditionalParams addlParams)
+        {
+            // Place great runes in boss drops
+            var pair = Array.Find(RandomizedGameState.BossDefinitionGreatRunePairs, element => GameData.MajorBosses2[element.Item1].MapItemLotIds[0] == itemLot.Id);
+            if (pair != null)
+            {
+                var bossDefinition = GameData.MajorBosses2[pair.Item1];
+                var greatRune = GameData.GreatRunes[pair.Item2];
+                itemLot.ItemID1 = greatRune.Id;
+                itemLot.ItemCategory1 = greatRune.Category;
+                itemLot.ItemChance1 = 1000;
+                itemLot.ItemAmount1 = 1;
+
+                SpoilerLog.Add($"Required: {bossDefinition.Name} (drops {greatRune.Name})");
+
+                return;
+            }
+
+            RandomizeOneItemLot(itemLot, AllWeights, addlParams, true);
+        }
+
         private void AddItemsToTwinMaidenHusks()
         {
+            // TODO Remove
             // Add whetstone and whetblades to twin maiden husks
             var row = RegulationParams.ShopLineupParam[101880];
             row.SellPriceOverwrite = 0;
