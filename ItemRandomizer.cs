@@ -209,13 +209,13 @@ namespace EldenRingItemRandomizer
             CurrentTaskIndex++;
             UpdateProgress(0);
 
-            var allBossIndices = GameData.MajorBosses2.Select((_, index) => index).ToArray();
+            var allBossIndices = GameData.RandomizedBosses.Select((_, index) => index).ToArray();
             RandomUtils.Shuffle(RandomNumberGenerator, ref allBossIndices);
 
             var allGreatRuneIndices = GameData.GreatRunes.Select((_, index) => index).ToArray();
             RandomUtils.Shuffle(RandomNumberGenerator, ref allGreatRuneIndices);
 
-            var bossIndices = allBossIndices.Take(Options.GreatRunesRequired).ToArray();
+            var bossIndices = allBossIndices.Where(index => ShouldConsiderBoss(GameData.RandomizedBosses[index])).Take(Options.GreatRunesRequired).ToArray();
             var greatRuneIndices = allGreatRuneIndices.Take(Options.GreatRunesRequired).ToArray();
             var pairs = bossIndices.Select((bossIndex, bossArrayIndex) => new Tuple<int, int>(bossIndex, greatRuneIndices[bossArrayIndex])).ToArray();
 
@@ -226,6 +226,16 @@ namespace EldenRingItemRandomizer
 
             // Save it for later
             JSON.SaveToFile("state.json", RandomizedGameState);
+        }
+
+        private bool ShouldConsiderBoss(BossDefinition definition)
+        {
+            return definition.Type switch
+            {
+                BossType.Legends => Options.GreatRunesFromBossLegend,
+                BossType.GreatEnemies => Options.GreatRunesFromBossGreatEnemy,
+                BossType.FieldBosses => Options.GreatRunesFromBossField,
+            };
         }
 
         private void RemoveEnemyItemLots()
@@ -260,8 +270,6 @@ namespace EldenRingItemRandomizer
                     ReplaceMapItemLot(itemLot, addlParams);
                 }
             }
-
-            GivePlayerMaxFlasks();
         }
 
         private void RandomizeShopItems()
@@ -417,18 +425,6 @@ namespace EldenRingItemRandomizer
             //Console.WriteLine($"{itemLot.RowName}\n\tReplaced with {GetFriendlyItemName(item)}");
         }
 
-        private void GivePlayerMaxFlasks()
-        {
-            // Give max flasks
-            var row = RegulationParams.ItemLotParam_map[2000];
-            row.ItemID1 = 1025;
-            row.ItemAmount1 = 12;
-
-            row = RegulationParams.ItemLotParam_map[2001];
-            row.ItemID1 = 1075;
-            row.ItemAmount1 = 2;
-        }
-
         private bool ShouldPreserveMapItemLot(ItemLotParam mapLot)
         {
             if (mapLot.RowName?.Length > 0 && mapLot.RowName.StartsWith("[Material]"))
@@ -438,15 +434,7 @@ namespace EldenRingItemRandomizer
 
             return mapLot.Id switch
             {
-                2000 => true, // Flask of Crimson Tears
-                2001 => true, // Flask of Cerulean Tears
-                10010000 => true, // Wizened Finger
-                1046360500 => true, // Dectus Medallion (left)
-                1051390900 => true, // Dectus Medallion (right)
                 16000690 => true, // Serpent-Hunter
-                14000930 => true, // Academy Glintstone Key
-                1034450100 => true, // Academy Glintstone Key
-                100010 => true, // Rold Medallion
                 _ => false
             };
         }
@@ -454,15 +442,16 @@ namespace EldenRingItemRandomizer
         private void ReplaceMapItemLot(ItemLotParam itemLot, ItemAdditionalParams addlParams)
         {
             // Place great runes in boss drops
-            var pair = Array.Find(RandomizedGameState.BossDefinitionGreatRunePairs, element => GameData.MajorBosses2[element.Item1].MapItemLotIds[0] == itemLot.Id);
+            var pair = Array.Find(RandomizedGameState.BossDefinitionGreatRunePairs, element => GameData.RandomizedBosses[element.Item1].MapItemLotIds[0] == itemLot.Id);
             if (pair != null)
             {
-                var bossDefinition = GameData.MajorBosses2[pair.Item1];
+                var bossDefinition = GameData.RandomizedBosses[pair.Item1];
                 var greatRune = GameData.GreatRunes[pair.Item2];
                 itemLot.ItemID1 = greatRune.Id;
                 itemLot.ItemCategory1 = greatRune.Category;
                 itemLot.ItemChance1 = 1000;
                 itemLot.ItemAmount1 = 1;
+                itemLot.ItemAcquisitionFlag = (uint)greatRune.EventId;
 
                 SpoilerLog.Add($"Required: {bossDefinition.Name} (drops {greatRune.Name})");
 
@@ -647,12 +636,16 @@ namespace EldenRingItemRandomizer
                 var categoryCell = itemLot[$"ItemCategory{i}"];
                 var amountCell = itemLot[$"ItemAmount{i}"];
                 var itemChanceCell = itemLot[$"ItemChance{i}"];
+                var itemAcquisitionFlagCell = itemLot[$"ItemAcquisitionFlag{i}"];
 
                 itemIdCell.Value = 0;
                 itemChanceCell.Value = 0;
                 amountCell.Value = 0;
                 categoryCell.Value = ItemlotItemcategory.None;
+                itemAcquisitionFlagCell.Value = 0; // TODO: necessary?
             }
+
+            itemLot.ItemAcquisitionFlag = 0; // TODO: necessary?
         }
     }
 }

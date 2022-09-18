@@ -15,6 +15,19 @@ namespace EldenRingItemRandomizer
     {
         public static string Version = "1.4";
 
+        private static string Coalesce(params string[] values)
+        {
+            foreach (var value in values)
+            {
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    return value;
+                }
+            }
+
+            return null;
+        }
+
         static void Main(string[] args)
         {
 #if GenerateCode
@@ -27,7 +40,7 @@ namespace EldenRingItemRandomizer
 
             if (string.IsNullOrWhiteSpace(preferences.GameInstallDirectory) || !Directory.Exists(preferences.GameInstallDirectory))
             {
-                Console.WriteLine("Game install directory is not set or does not exist. Set it in preferences.json.");
+                Console.WriteLine("Game install directory is not set or does not exist. Set \"GameInstallDirectory\" in preferences.json.");
                 Console.WriteLine();
                 Console.Write("Press any key to close...");
                 Console.ReadLine();
@@ -36,7 +49,7 @@ namespace EldenRingItemRandomizer
 
             if (string.IsNullOrWhiteSpace(preferences.YappedDirectory) || !Directory.Exists(preferences.YappedDirectory))
             {
-                Console.WriteLine("Yapped directory is not set or does not exist. Set it in preferences.json.");
+                Console.WriteLine("Yapped directory is not set or does not exist. Set \"YappedDirectory\" in preferences.json.");
                 Console.WriteLine();
                 Console.Write("Press any key to close...");
                 Console.ReadLine();
@@ -45,20 +58,30 @@ namespace EldenRingItemRandomizer
 
             ParamClassGenerator.YappedPath = preferences.YappedDirectory;
 
-            string regulationInPath = Path.Combine(preferences.GameInstallDirectory, "regulation.bin.bak");
+            string regulationInPath = Coalesce(preferences.BackupRegulationPath, Path.Combine(preferences.GameInstallDirectory, "regulation.bin.bak"));
             string regulationOutPath = Path.Combine(preferences.GameInstallDirectory, "regulation.bin");
-            string exePath = Path.Combine(preferences.GameInstallDirectory, "launch_elden_ring_seamlesscoop.exe");
+            string exePath = Coalesce(preferences.EldenRingExePath, Path.Combine(preferences.GameInstallDirectory, "launch_elden_ring_seamlesscoop.exe"));
 
             if (!File.Exists(regulationInPath))
             {
-                Console.WriteLine("regulation.bin.bak file not found in game install directory. Copy the vanilla regulation.bin and rename it to regulation.bin.bak.");
+                Console.WriteLine("Backup regulation file not found. Copy the vanilla regulation.bin and rename it to regulation.bin.bak, or set \"BackupRegulationPath\" in preferences.json.");
                 Console.WriteLine();
                 Console.Write("Press any key to close...");
                 Console.ReadLine();
                 return;
             }
 
-            Console.WriteLine("Found regulation.bin.bak file in game install directory");
+            if (!File.Exists(exePath))
+            {
+                Console.WriteLine("Elden Ring .exe not found. Set \"EldenRingExePath\" in preferences.json.");
+                Console.WriteLine();
+                Console.Write("Press any key to close...");
+                Console.ReadLine();
+                return;
+            }
+
+            Console.WriteLine($"Found backup regulation file at \"{regulationInPath}\"");
+            Console.WriteLine($"Found Elden Ring .exe at \"{exePath}\"");
             Console.WriteLine();
 
             var mainOption = ConsolePrompt.Option("What do you want to do", new string[] { "Randomize game files", "Run Elden Ring" });
@@ -105,9 +128,6 @@ namespace EldenRingItemRandomizer
                 Console.WriteLine(shareableParamsJson);
 
                 Console.WriteLine(string.Join("\n", randomizer.SpoilerLog));
-
-                // TODO remove
-                return;
                 Console.WriteLine();
                 var runtime = new ItemRandomizerRuntime(regulationInPath, exePath);
                 runtime.OnProgressChanged += DrawProgressBar;
@@ -150,7 +170,10 @@ namespace EldenRingItemRandomizer
             {
                 Seed = seed,
                 WeaponBaseDamageMultiplier = ConsolePrompt.Float("Weapon Base Damage Multiplier", 1),
-                WeaponScalingMultiplier = ConsolePrompt.Float("Weapon Scaling Multiplier", 1)
+                WeaponScalingMultiplier = ConsolePrompt.Float("Weapon Scaling Multiplier", 1),
+                GreatRunesFromBossLegend = ConsolePrompt.Bool("Great Runes Drop From Demigods/Legends", true),
+                GreatRunesFromBossGreatEnemy = ConsolePrompt.Bool("Great Runes Drop From (some) Great Enemies", true),
+                GreatRunesFromBossField = ConsolePrompt.Bool("Great Runes Drop From (some) Field Bosses", true),
             };
 
             return randomizerParams;

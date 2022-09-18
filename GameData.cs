@@ -38,8 +38,12 @@ namespace EldenRingItemRandomizer
         public int[] MapFragmentFlags { get; }
         public int[] MapPointFlags { get; private set; }
         public int[] WhetbladeFlagIds { get; }
-        public BossDefinition[] MajorBosses2 { get; }
+        public BossDefinition[] RandomizedBosses { get; }
         public ItemAndEventId[] GreatRunes { get; }
+        // Key items that open up the world.
+        public ItemAndEventId[] KeyItems { get; }
+        public SiteOfGrace[] UnlockedSitesOfGrace { get; }
+        public SiteOfGrace SiteOfGraceLeyndellCapitalOfAsh { get; }
 
         public GameData(RegulationParams regulationParams)
         {
@@ -736,26 +740,48 @@ namespace EldenRingItemRandomizer
                 65640,
             };
 
-            MajorBosses2 = new BossDefinition[]
+            RandomizedBosses = new BossDefinition[]
             {
-                new BossDefinition("Margit", 10000),
-                new BossDefinition("Godrick", 10010, 10011),
-                new BossDefinition("Morgott", 10040, 10041),
-                new BossDefinition("Mohg", 10120, 10121, 10250),
-                //new BossDefinition("Godfrey", 101100), // TODO: Unsure
-                new BossDefinition("Godfrey / Hoarah Loux", 10070),
-                new BossDefinition("Gideon", 10060, 10061, 10062, 10063, 10064),
-                new BossDefinition("Godskin Duo", 10140, 10141),
-                new BossDefinition("Red Wolf of Radagon", 10170),
-                new BossDefinition("Rennala", 10180, 10181, 10182),
-                new BossDefinition("Loretta", 10190, 10191),
-                new BossDefinition("Malenia", 10200, 10201),
-                new BossDefinition("Godskin Noble", 10210, 10211),
-                new BossDefinition("Maliketh", 10160),
-                new BossDefinition("Rykard", 10220, 10221),
-                new BossDefinition("Elden Beast", 10230),
-                new BossDefinition("Radahn", 10300, 10301),
-                new BossDefinition("Fire Giant", 10310),
+                // Legends
+                new BossDefinition("Godrick the Grafted", BossType.Legends, 10010, 10011),
+                new BossDefinition("Rennala, Queen of the Full Moon", BossType.Legends, 10180, 10181, 10182),
+                new BossDefinition("Starscourge Radahn", BossType.Legends, 10300, 10301),
+                new BossDefinition("Regal Ancestor Spirit", BossType.Legends, 10330),
+                new BossDefinition("Astel, Naturalborn of the Void", BossType.Legends, 10080),
+                new BossDefinition("Rykard, Lord of Blasphemy", BossType.Legends, 10220, 10221),
+                new BossDefinition("Morgott the Omen King", BossType.Legends, 10040, 10041),
+                new BossDefinition("Malenia, Blade of Miquella", BossType.Legends, 10200, 10201),
+                new BossDefinition("Mohg, Lord of Blood", BossType.Legends, 10120, 10121, 10250),
+                //new BossDefinition("Lichdragon Fortissax", BossType.Legends, 10110), // Not included because of prerequisites (Fia's questline)
+                new BossDefinition("Fire Giant", BossType.Legends, 10310),
+                new BossDefinition("Dragonlord Placidusax", BossType.Legends, 10150),
+                new BossDefinition("Maliketh, the Black Blade", BossType.Legends, 10160),
+                //new BossDefinition("Hoarah Loux, Warrior", 10070), // Not included because in endgame area
+                //new BossDefinition("Elden Beast", 10230), // Not included because in endgame area
+
+                // Great Enemies
+                new BossDefinition("Margit, the Fell Omen", BossType.GreatEnemies, 10000),
+                new BossDefinition("Godskin Duo", BossType.GreatEnemies, 10140, 10141),
+                new BossDefinition("Red Wolf of Radagon", BossType.GreatEnemies, 10170),
+                new BossDefinition("Leonine Misbegotten", BossType.GreatEnemies, 10800),
+                new BossDefinition("Valiant Gargoyles", BossType.GreatEnemies, 10100, 10101),
+
+                // Field Bosses
+                new BossDefinition("Crucible Knight Ordovis", BossType.FieldBosses, 20100, 20101, 20102, 20103, 20104),
+                new BossDefinition("Full-Grown Fallingstar Beast", BossType.FieldBosses, 30375, 30376, 30377),
+                new BossDefinition("Abductor Virgins", BossType.FieldBosses, 10290),
+                // new BossDefinition("Ancient Dragon Lansseax", BossType.FieldBosses, 30300), // Not included because fight takes place in two different locations
+                new BossDefinition("Commander Niall", BossType.FieldBosses, 10840),
+                new BossDefinition("Commander O'Neil", BossType.FieldBosses, 30405, 30406),
+                new BossDefinition("Elemer of the Briar", BossType.FieldBosses, 10820, 10821),
+                new BossDefinition("Glintstone Dragon Smarag", BossType.FieldBosses, 30210),
+                new BossDefinition("Great Wyrm Theodorix", BossType.FieldBosses, 30550),
+                new BossDefinition("Godskin Noble (Volcano Manor)", BossType.FieldBosses, 10210, 10211),
+                new BossDefinition("Loretta, Knight of the Haligtree",BossType.FieldBosses, 10190, 10191),
+                new BossDefinition("Royal Knight Loretta",BossType.FieldBosses, 10810, 10811),
+                
+                //new BossDefinition("Godfrey", 101100), // Not included because unsure of lot id
+                //new BossDefinition("Gideon", 10060, 10061, 10062, 10063, 10064), // Not included because in endgame area
             };
 
             GreatRunes = new ItemAndEventId[]
@@ -768,6 +794,67 @@ namespace EldenRingItemRandomizer
                 new ItemAndEventId("Rykard's Great Rune", 8151, ItemlotItemcategory.Good, 174),
                 new ItemAndEventId("Radahn's Great Rune", 8149, ItemlotItemcategory.Good, 172),
             };
+
+            KeyItems = new ItemAndEventId[]
+            {
+                new ItemAndEventId("Dectus Medallion (Right)", 8106, ItemlotItemcategory.Good, 1051397900),
+                new ItemAndEventId("Dectus Medallion (Left)", 8105, ItemlotItemcategory.Good, 1046367500),
+                new ItemAndEventId("Rold Medallion", 8107, ItemlotItemcategory.Good, 400001),
+                new ItemAndEventId("Haligtree Secret Medallion (Right)", 8176, ItemlotItemcategory.Good, 400130),
+                new ItemAndEventId("Haligtree Secret Medallion (Left)", 8175, ItemlotItemcategory.Good, 400280),
+                new ItemAndEventId("Academy Glintstone Key", 8109, ItemlotItemcategory.Good, 1034457100),
+            };
+
+            UnlockedSitesOfGrace = new SiteOfGrace[]
+            {
+                // Limgrave
+                new SiteOfGrace("Table of Lost Grace", 11101950, 71190),
+                new SiteOfGrace("Stormhill Shack", 1041381950, 76102),
+                new SiteOfGrace("Agheel Lake North", 1043371950, 76108),
+                new SiteOfGrace("Fort Haight West", 1045361950, 76105),
+
+                // Weeping Peninsula
+                new SiteOfGrace("Castle Morne Rampart", 1044331950, 76151),
+
+                // Liurnia
+                new SiteOfGrace("Main Academy Gate", 1035461950, 76206),
+                new SiteOfGrace("Eastern Liurnia Lake Shore", 1038451951, 76223),
+                new SiteOfGrace("Main Caria Manor Gate", 1035501953, 76214),
+
+                // Mt. Gelmir
+                new SiteOfGrace("Volcano Manor", 16001952, 71602),
+
+                // Altus Plateau
+                new SiteOfGrace("Altus Plateau", 1038501952, 76301),
+                new SiteOfGrace("Capital Rampart", 1045521950, 76314),
+
+                // Mountaintops of the Giants
+                new SiteOfGrace("Zamor Ruins", 1049531950, 76501),
+
+                // Consecrated Snowfield
+                new SiteOfGrace("Consecrated Snowfield", 1049541950, 76550),
+
+                // Faram Azula
+                new SiteOfGrace("Crumbling Beast Grave Depths", 13001954, 71304),
+
+                // Caelid
+                new SiteOfGrace("Chamber Outside the Plaza", 1051361951, 76420),
+                new SiteOfGrace("Caelid Highway South", 1048371950, 76405),
+                new SiteOfGrace("Farum Greatbridge", 1052421950, 76456),
+
+                // Haligtree
+                new SiteOfGrace("Haligtree Canopy", 15001956, 71506),
+
+                // Underground
+                new SiteOfGrace("Palace Approach Ledge-Road", 12051951, 71251),
+                new SiteOfGrace("Deeproot Depths", 12031953, 71233),
+                new SiteOfGrace("Nokstella, Eternal City", 12011955, 71215),
+                new SiteOfGrace("Lake of Rot Shoreside", 12011956, 71216),
+                new SiteOfGrace("Nokron, Eternal City", 12071951, 71271),
+                new SiteOfGrace("Siofra River Bank", 12021953, 71222),
+            };
+
+            SiteOfGraceLeyndellCapitalOfAsh = new SiteOfGrace("Leyndell, Capital of Ash", 11051953, 71123);
         }
     }
 }

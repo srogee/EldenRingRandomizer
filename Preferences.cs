@@ -10,6 +10,8 @@ namespace EldenRingItemRandomizer
     {
         public string GameInstallDirectory;
         public string YappedDirectory;
+        public string EldenRingExePath;
+        public string BackupRegulationPath;
 
         public Preferences() { }
     }

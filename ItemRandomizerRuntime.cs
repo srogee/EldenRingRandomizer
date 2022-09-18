@@ -34,6 +34,7 @@ namespace EldenRingItemRandomizer
             new TaskDefinition("Unlocking Map Locations"),
             new TaskDefinition("Unlocking Whetblades"),
             new TaskDefinition("Unlocking Torrent"),
+            new TaskDefinition("Unlocking world"),
             new TaskDefinition("Granting Flasks"),
         };
 
@@ -65,7 +66,28 @@ namespace EldenRingItemRandomizer
                     // Do first time setup when hooked and player is valid
                     OnHookedAndLoaded();
                     HookedAndLoadedRaised = true;
-                    break;
+                }
+
+                if (HookedAndLoadedRaised)
+                {
+                    ConsoleUtils.StartOverwrite();
+
+                    foreach (var pair in RandomizedGameState.BossDefinitionGreatRunePairs)
+                    {
+                        var boss = GameData.RandomizedBosses[pair.Item1];
+                        var greatRune = GameData.GreatRunes[pair.Item2];
+                        var acquired = Hook.GetEventFlag(greatRune.EventId);
+                        ConsoleUtils.WriteLine($"{boss.Name} ({greatRune.Name}) - {(acquired ? "Acquired" : "Not Acquired")}");
+                    }
+
+                    var unlocked = Hook.GetEventFlag(GameData.SiteOfGraceLeyndellCapitalOfAsh.EventId);
+                    ConsoleUtils.WriteLine($"Leyndell, Capital of Ash - {(unlocked ? "Unlocked" : "Not Unlocked")}");
+
+                    // Unlock Ashen Capital when all great runes are acquired
+                    if (ShouldUnlockEndgame())
+                    {
+                        Hook.SetEventFlag(GameData.SiteOfGraceLeyndellCapitalOfAsh.EventId, true);
+                    }
                 }
 
                 Thread.Sleep(1000); // Don't thrash the CPU
@@ -111,6 +133,7 @@ namespace EldenRingItemRandomizer
             UnlockAllMapPoints();
             UnlockAllWhetblades();
             UnlockTorrent();
+            UnlockWorld();
             GrantUpgradedFlasks();
             OnProgressChanged(1, "Done");
         }
@@ -119,12 +142,6 @@ namespace EldenRingItemRandomizer
         {
             CurrentTaskIndex++;
             UpdateProgress(0);
-
-            // set the first step, church of elleh, stranded graveyard and gatefront as unlocked
-            Hook.SetEventFlag(76100, true);
-            Hook.SetEventFlag(76101, true);
-            Hook.SetEventFlag(76111, true);
-            Hook.SetEventFlag(71801, true);
 
             // warp to roundtable
             Hook.Warp(11101950);
@@ -180,6 +197,33 @@ namespace EldenRingItemRandomizer
 
             Hook.GiveItem(new ItemSpawnInfo(1025, Category.Goods, 12, 14, 0, 0, -1, 60000));
             Hook.GiveItem(new ItemSpawnInfo(1075, Category.Goods, 2, 14, 0, 0, -1, 60000));
+        }
+
+        private void UnlockWorld()
+        {
+            CurrentTaskIndex++;
+            UpdateProgress(0);
+
+            foreach (var keyItem in GameData.KeyItems)
+            {
+                Hook.GiveItem(keyItem.GetItemSpawnInfo());
+            }
+
+            foreach (var siteOfGrace in GameData.UnlockedSitesOfGrace)
+            {
+                Hook.SetEventFlag(siteOfGrace.EventId, true);
+            }
+
+            // Unlock door to Lyendell
+            Hook.SetEventFlag(105, true);
+            Hook.SetEventFlag(182, true);
+        }
+
+        private bool ShouldUnlockEndgame()
+        {
+            var greatRunes = RandomizedGameState.BossDefinitionGreatRunePairs.Select(pair => GameData.GreatRunes[pair.Item2]);
+
+            return greatRunes.All(greatRune => Hook.GetEventFlag(greatRune.EventId));
         }
     }
 }
