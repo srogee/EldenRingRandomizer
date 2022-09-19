@@ -777,7 +777,7 @@ namespace EldenRingItemRandomizer
                 new BossDefinition("Valiant Gargoyles", BossType.GreatEnemies, 10100, 10101),
 
                 // Field Bosses
-                new BossDefinition("Crucible Knight Ordovis", BossType.FieldBosses, 20100, 20101, 20102, 20103, 20104),
+                //new BossDefinition("Crucible Knight Ordovis", BossType.FieldBosses, 20100, 20101, 20102, 20103, 20104), // Not included because hero's grave is too hard
                 new BossDefinition("Full-Grown Fallingstar Beast", BossType.FieldBosses, 30375, 30376, 30377),
                 new BossDefinition("Abductor Virgins", BossType.FieldBosses, 10290),
                 // new BossDefinition("Ancient Dragon Lansseax", BossType.FieldBosses, 30300), // Not included because fight takes place in two different locations
@@ -836,7 +836,8 @@ namespace EldenRingItemRandomizer
 
                 // Altus Plateau
                 new SiteOfGrace("Altus Plateau", 1038501952, 76301),
-                new SiteOfGrace("Capital Rampart", 1045521950, 76314),
+                new SiteOfGrace("East Capital Rampart", 11001952, 71102),
+                new SiteOfGrace("Outer Wall Battleground", 1043531951, 76312),
 
                 // Mountaintops of the Giants
                 new SiteOfGrace("Zamor Ruins", 1049531950, 76501),
@@ -853,7 +854,7 @@ namespace EldenRingItemRandomizer
                 new SiteOfGrace("Farum Greatbridge", 1052421950, 76456),
 
                 // Haligtree
-                new SiteOfGrace("Haligtree Canopy", 15001956, 71506),
+                new SiteOfGrace("Haligtree Town Plaza", 15001958, 71508),
 
                 // Underground
                 new SiteOfGrace("Palace Approach Ledge-Road", 12051951, 71251),
