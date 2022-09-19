@@ -70,23 +70,27 @@ namespace EldenRingItemRandomizer
 
                 if (HookedAndLoadedRaised)
                 {
+                    Console.WriteLine();
+                    Console.WriteLine();
                     ConsoleUtils.StartOverwrite();
 
+                    Console.WriteLine("Randomizer Progress");
                     foreach (var pair in RandomizedGameState.BossDefinitionGreatRunePairs)
                     {
                         var boss = GameData.RandomizedBosses[pair.Item1];
                         var greatRune = GameData.GreatRunes[pair.Item2];
                         var acquired = Hook.GetEventFlag(greatRune.EventId);
-                        ConsoleUtils.WriteLine($"{boss.Name} ({greatRune.Name}) - {(acquired ? "Acquired" : "Not Acquired")}");
+                        ConsoleUtils.WriteLine($"{boss.Name} ({greatRune.Name}) - {(acquired ? "Defeated" : "Not Defeated")}");
                     }
 
-                    var unlocked = Hook.GetEventFlag(GameData.SiteOfGraceLeyndellCapitalOfAsh.EventId);
-                    ConsoleUtils.WriteLine($"Leyndell, Capital of Ash - {(unlocked ? "Unlocked" : "Not Unlocked")}");
+                    var unlocked = Hook.GetEventFlag(GameData.FinalBossSiteOfGrace.EventId);
+                    ConsoleUtils.WriteLine("");
+                    ConsoleUtils.WriteLine($"Final Boss - {(unlocked ? "Unlocked" : "Not Unlocked")}");
 
                     // Unlock Ashen Capital when all great runes are acquired
                     if (ShouldUnlockEndgame())
                     {
-                        Hook.SetEventFlag(GameData.SiteOfGraceLeyndellCapitalOfAsh.EventId, true);
+                        Hook.SetEventFlag(GameData.FinalBossSiteOfGrace.EventId, true);
                     }
                 }
 
@@ -124,6 +128,10 @@ namespace EldenRingItemRandomizer
         private void OnHooked()
         {
             LoadRegulationFile();
+
+            CurrentTaskIndex++;
+            UpdateProgress(0);
+            // Wait for player memory location
         }
 
         private void OnHookedAndLoaded()
@@ -152,9 +160,9 @@ namespace EldenRingItemRandomizer
             CurrentTaskIndex++;
             UpdateProgress(0);
 
-            foreach (var flag in GameData.MapFragmentFlags)
+            foreach (var item in GameData.MapFragments)
             {
-                Hook.SetEventFlag(flag, true);
+                Hook.GiveItem(item.GetItemSpawnInfo());
             }
         }
 

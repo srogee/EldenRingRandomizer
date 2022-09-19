@@ -35,15 +35,14 @@ namespace EldenRingItemRandomizer
         public ItemLotGroup[] MapPlinths { get; }
         public int[] GoodRuneIds { get; }
         public int[] ShopLineupIds { get; }
-        public int[] MapFragmentFlags { get; }
+        public ItemAndEventId[] MapFragments { get; }
         public int[] MapPointFlags { get; private set; }
-        public int[] WhetbladeFlagIds { get; }
         public BossDefinition[] RandomizedBosses { get; }
         public ItemAndEventId[] GreatRunes { get; }
         // Key items that open up the world.
         public ItemAndEventId[] KeyItems { get; }
         public SiteOfGrace[] UnlockedSitesOfGrace { get; }
-        public SiteOfGrace SiteOfGraceLeyndellCapitalOfAsh { get; }
+        public SiteOfGrace FinalBossSiteOfGrace { get; }
 
         public GameData(RegulationParams regulationParams)
         {
@@ -726,19 +725,30 @@ namespace EldenRingItemRandomizer
             
             TeardropScarabs = RegulationParams.ItemLotParam_map.Where(row => (row.RowName ?? "").StartsWith("[Teardrop Scarab")).Select(row => new ItemLotGroup(row.Id)).ToArray();
 
-            MapFragmentFlags = RegulationParams.WorldMapPieceParam.Select(row => (int)row.OpenEventFlagID).ToArray();
+            MapFragments = new ItemAndEventId[]
+            {
+                new ItemAndEventId("Map: Ainsel", 8613, ItemlotItemcategory.Good, 62060),
+                new ItemAndEventId("Map: Lake of Rot", 8614, ItemlotItemcategory.Good, 62061),
+                new ItemAndEventId("Map: Siofra River", 8615, ItemlotItemcategory.Good, 62063),
+                new ItemAndEventId("Map: Deeproot Depths", 8617, ItemlotItemcategory.Good, 62064),
+                new ItemAndEventId("Map: Mohgwyn Palace", 8616, ItemlotItemcategory.Good, 62062),
+                new ItemAndEventId("Map: Limgrave, West", 8600, ItemlotItemcategory.Good, 62010),
+                new ItemAndEventId("Map: Weeping Peninsula", 8601, ItemlotItemcategory.Good, 62011),
+                new ItemAndEventId("Map: Limgrave, East", 8602, ItemlotItemcategory.Good, 62012),
+                new ItemAndEventId("Map: Dragonbarrow", 8610, ItemlotItemcategory.Good, 62041),
+                new ItemAndEventId("Map: Caelid", 8609, ItemlotItemcategory.Good, 62040),
+                new ItemAndEventId("Map: Liurnia, East", 8603, ItemlotItemcategory.Good, 62020),
+                new ItemAndEventId("Map: Liurnia, North", 8604, ItemlotItemcategory.Good, 62021),
+                new ItemAndEventId("Map: Liurnia, West", 8605, ItemlotItemcategory.Good, 62022),
+                new ItemAndEventId("Map: Altus Plateau", 8606, ItemlotItemcategory.Good, 62030),
+                new ItemAndEventId("Map: Leyndell, Royal Capital", 8607, ItemlotItemcategory.Good, 62031),
+                new ItemAndEventId("Map: Mt. Gelmir", 8608, ItemlotItemcategory.Good, 62032),
+                new ItemAndEventId("Map: Mountaintops of the Giants, West", 8611, ItemlotItemcategory.Good, 62050),
+                new ItemAndEventId("Map: Mountaintops of the Giants, East", 8612, ItemlotItemcategory.Good, 62051),
+                new ItemAndEventId("Map: Consecrated Snowfield", 8618, ItemlotItemcategory.Good, 62052),
+            };
 
             MapPointFlags = RegulationParams.WorldMapPointParam.Select(row => (int)row.OpenEventFlagID).ToArray();
-
-            WhetbladeFlagIds = new int[]
-            {
-                400210,
-                65610,
-                65660,
-                65720,
-                65680,
-                65640,
-            };
 
             RandomizedBosses = new BossDefinition[]
             {
@@ -854,7 +864,7 @@ namespace EldenRingItemRandomizer
                 new SiteOfGrace("Siofra River Bank", 12021953, 71222),
             };
 
-            SiteOfGraceLeyndellCapitalOfAsh = new SiteOfGrace("Leyndell, Capital of Ash", 11051953, 71123);
+            FinalBossSiteOfGrace = new SiteOfGrace("Fractured Marika", 19001950, 71900);
         }
     }
 }

@@ -36,6 +36,7 @@ namespace EldenRingItemRandomizer
             RegulationInPath = regulationInPath;
             RegulationOutPath = regulationOutPath;
             SpoilerLog = new List<string>();
+            SpoilerLog.Add($"Spoiler Log");
         }
 
         private static TaskDefinition[] Tasks = new TaskDefinition[] {
@@ -636,16 +637,16 @@ namespace EldenRingItemRandomizer
                 var categoryCell = itemLot[$"ItemCategory{i}"];
                 var amountCell = itemLot[$"ItemAmount{i}"];
                 var itemChanceCell = itemLot[$"ItemChance{i}"];
-                var itemAcquisitionFlagCell = itemLot[$"ItemAcquisitionFlag{i}"];
+                //var itemAcquisitionFlagCell = itemLot[$"ItemAcquisitionFlag{i}"];
 
                 itemIdCell.Value = 0;
                 itemChanceCell.Value = 0;
                 amountCell.Value = 0;
                 categoryCell.Value = ItemlotItemcategory.None;
-                itemAcquisitionFlagCell.Value = 0; // TODO: necessary?
+                //itemAcquisitionFlagCell.Value = 0; // This makes boss items keep appearing
             }
 
-            itemLot.ItemAcquisitionFlag = 0; // TODO: necessary?
+            //itemLot.ItemAcquisitionFlag = 0; // This makes boss items keep appearing
         }
     }
 }

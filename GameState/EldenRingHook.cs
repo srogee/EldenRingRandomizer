@@ -136,6 +136,19 @@ namespace EldenRingItemRandomizer.GameState
             Free(idPointer);
         }
 
+        public bool GetBitFlag(int bitStart, bool value, params int[] offsets)
+        {
+            var pointer = CreateChildPointer(CSFD4VirtualMemoryFlag, offsets);
+            var byteValue = pointer.ReadByte(0);
+            return (byteValue & (1 << bitStart)) != 0;
+        }
+
+        public void SetBitFlag(int bitStart, bool value, params int[] offsets)
+        {
+            var pointer = CreateChildPointer(CSFD4VirtualMemoryFlag, offsets);
+            var byteValue = pointer.ReadByte(0);
+        }
+
         public void Warp(int bonfireID)
         {
             IntPtr warpLocation = GetPrefferedIntPtr(sizeof(int));

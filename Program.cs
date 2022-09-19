@@ -127,8 +127,10 @@ namespace EldenRingItemRandomizer
                 Console.WriteLine("Share this JSON string with others:");
                 Console.WriteLine(shareableParamsJson);
 
-                Console.WriteLine(string.Join("\n", randomizer.SpoilerLog));
+                var spoilerLog = string.Join("\n", randomizer.SpoilerLog);
+                File.WriteAllText("spoilerlog.txt", spoilerLog);
                 Console.WriteLine();
+                Console.WriteLine(spoilerLog);
                 var runtime = new ItemRandomizerRuntime(regulationInPath, exePath);
                 runtime.OnProgressChanged += DrawProgressBar;
                 Console.WriteLine();
