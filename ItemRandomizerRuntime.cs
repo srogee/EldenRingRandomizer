@@ -90,7 +90,7 @@ namespace EldenRingItemRandomizer
                     // Unlock Ashen Capital when all great runes are acquired
                     if (ShouldUnlockEndgame())
                     {
-                        Hook.SetEventFlag(GameData.FinalBossSiteOfGrace.EventId, true);
+                        SetEventFlagOnce(GameData.FinalBossSiteOfGrace.EventId, true);
                     }
                 }
 
@@ -152,7 +152,10 @@ namespace EldenRingItemRandomizer
             UpdateProgress(0);
 
             // warp to roundtable
-            Hook.Warp(11101950);
+            if (!HasSiteOfGrace(GameData.RoundtableHoldSiteOfGrace))
+            {
+                Hook.Warp(GameData.RoundtableHoldSiteOfGrace.Id);
+            }
         }
 
         private void UnlockAllMapFragments()
@@ -162,7 +165,7 @@ namespace EldenRingItemRandomizer
 
             foreach (var item in GameData.MapFragments)
             {
-                Hook.GiveItem(item.GetItemSpawnInfo());
+                GiveItemOnce(item.GetItemSpawnInfo());
             }
         }
 
@@ -173,7 +176,7 @@ namespace EldenRingItemRandomizer
 
             foreach (var flag in GameData.MapPointFlags)
             {
-                Hook.SetEventFlag(flag, true);
+                SetEventFlagOnce(flag, true);
             }
         }
 
@@ -182,12 +185,12 @@ namespace EldenRingItemRandomizer
             CurrentTaskIndex++;
             UpdateProgress(0);
 
-            Hook.GiveItem(new ItemSpawnInfo(8590, Category.Goods, 1, 1, 0, 0, -1, 400210)); // Whetstone Knife
-            Hook.GiveItem(new ItemSpawnInfo(8970, Category.Goods, 1, 1, 0, 0, -1, 65610)); // Iron Whetblade
-            Hook.GiveItem(new ItemSpawnInfo(8972, Category.Goods, 1, 1, 0, 0, -1, 65660)); // Sanctified Whetblade
-            Hook.GiveItem(new ItemSpawnInfo(8974, Category.Goods, 1, 1, 0, 0, -1, 65720)); // Black Whetblade
-            Hook.GiveItem(new ItemSpawnInfo(8973, Category.Goods, 1, 1, 0, 0, -1, 65680)); // Glintstone Whetblade
-            Hook.GiveItem(new ItemSpawnInfo(8971, Category.Goods, 1, 1, 0, 0, -1, 65640)); // Red-Hot Whetblade
+            GiveItemOnce(new ItemSpawnInfo(8590, Category.Goods, 1, 1, 0, 0, -1, 400210)); // Whetstone Knife
+            GiveItemOnce(new ItemSpawnInfo(8970, Category.Goods, 1, 1, 0, 0, -1, 65610)); // Iron Whetblade
+            GiveItemOnce(new ItemSpawnInfo(8972, Category.Goods, 1, 1, 0, 0, -1, 65660)); // Sanctified Whetblade
+            GiveItemOnce(new ItemSpawnInfo(8974, Category.Goods, 1, 1, 0, 0, -1, 65720)); // Black Whetblade
+            GiveItemOnce(new ItemSpawnInfo(8973, Category.Goods, 1, 1, 0, 0, -1, 65680)); // Glintstone Whetblade
+            GiveItemOnce(new ItemSpawnInfo(8971, Category.Goods, 1, 1, 0, 0, -1, 65640)); // Red-Hot Whetblade
         }
 
         private void UnlockTorrent()
@@ -195,7 +198,7 @@ namespace EldenRingItemRandomizer
             CurrentTaskIndex++;
             UpdateProgress(0);
 
-            Hook.GiveItem(new ItemSpawnInfo(130, Category.Goods, 1, 1, 0, 0, -1, 60100));
+            GiveItemOnce(new ItemSpawnInfo(130, Category.Goods, 1, 1, 0, 0, -1, 60100));
         }
 
         private void GrantUpgradedFlasks()
@@ -203,8 +206,11 @@ namespace EldenRingItemRandomizer
             CurrentTaskIndex++;
             UpdateProgress(0);
 
-            Hook.GiveItem(new ItemSpawnInfo(1025, Category.Goods, 12, 14, 0, 0, -1, 60000));
-            Hook.GiveItem(new ItemSpawnInfo(1075, Category.Goods, 2, 14, 0, 0, -1, 60000));
+            if (!Hook.GetEventFlag(60000))
+            {
+                Hook.GiveItem(new ItemSpawnInfo(1025, Category.Goods, 12, 14, 0, 0, -1, 60000));
+                Hook.GiveItem(new ItemSpawnInfo(1075, Category.Goods, 2, 14, 0, 0, -1, 60000));
+            }
         }
 
         private void UnlockWorld()
@@ -214,17 +220,17 @@ namespace EldenRingItemRandomizer
 
             foreach (var keyItem in GameData.KeyItems)
             {
-                Hook.GiveItem(keyItem.GetItemSpawnInfo());
+                GiveItemOnce(keyItem.GetItemSpawnInfo());
             }
 
             foreach (var siteOfGrace in GameData.UnlockedSitesOfGrace)
             {
-                Hook.SetEventFlag(siteOfGrace.EventId, true);
+                SetEventFlagOnce(siteOfGrace.EventId, true);
             }
 
             // Unlock door to Lyendell
-            Hook.SetEventFlag(105, true);
-            Hook.SetEventFlag(182, true);
+            SetEventFlagOnce(105, true);
+            SetEventFlagOnce(182, true);
         }
 
         private bool ShouldUnlockEndgame()
@@ -232,6 +238,32 @@ namespace EldenRingItemRandomizer
             var greatRunes = RandomizedGameState.BossDefinitionGreatRunePairs.Select(pair => GameData.GreatRunes[pair.Item2]);
 
             return greatRunes.All(greatRune => Hook.GetEventFlag(greatRune.EventId));
+        }
+
+        private void SetEventFlagOnce(int eventFlagId, bool state)
+        {
+            if (Hook.GetEventFlag(eventFlagId) != state)
+            {
+                Hook.SetEventFlag(eventFlagId, state);
+            }
+        }
+
+        private void GiveItemOnce(ItemSpawnInfo info)
+        {
+            if (!HasItem(info))
+            {
+                Hook.GiveItem(info);
+            }
+        }
+
+        private bool HasItem(ItemSpawnInfo info)
+        {
+            return Hook.GetEventFlag(info.EventID);
+        }
+
+        private bool HasSiteOfGrace(SiteOfGrace grace)
+        {
+            return Hook.GetEventFlag(grace.EventId);
         }
     }
 }

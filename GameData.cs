@@ -43,6 +43,7 @@ namespace EldenRingItemRandomizer
         public ItemAndEventId[] KeyItems { get; }
         public SiteOfGrace[] UnlockedSitesOfGrace { get; }
         public SiteOfGrace FinalBossSiteOfGrace { get; }
+        public SiteOfGrace RoundtableHoldSiteOfGrace { get; }
 
         public GameData(RegulationParams regulationParams)
         {
@@ -866,6 +867,7 @@ namespace EldenRingItemRandomizer
             };
 
             FinalBossSiteOfGrace = new SiteOfGrace("Fractured Marika", 19001950, 71900);
+            RoundtableHoldSiteOfGrace = new SiteOfGrace("Roundtable Hold", 11101950, 71190);
         }
     }
 }
